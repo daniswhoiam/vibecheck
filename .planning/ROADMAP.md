@@ -55,7 +55,13 @@ Plans:
   2. A post queried via the API with a known irrelevant keyword does not appear in the database
   3. Submitting the same URL or content twice results in exactly one stored post (deduplication confirmed)
   4. Collection job completes without aborting when one source is unavailable
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Shared foundation: PostCreate model, FilterService (ambiguity-aware), StorageService with dedup
+- [ ] 06-02-PLAN.md — HN Algolia + Discourse REST collectors (Wave 2, parallel with 06-03)
+- [ ] 06-03-PLAN.md — Reddit asyncpraw + Dev.to Forem API collectors (Wave 2, parallel with 06-02)
+- [ ] 06-04-PLAN.md — Scheduler wiring: setup_jobs() with 4 staggered jobs + end-to-end verification
 
 ### Phase 7: Tier 1 Sentiment + Aggregation
 **Goal**: Every collected post has a RoBERTa sentiment score, sentiment_timeseries rollups include per-source breakdown, and the API exposes source breakdown data to consumers
@@ -97,7 +103,7 @@ Plans:
 | 3. API & Integration | v1.0 | 3/3 | Complete | 2026-02-05 |
 | 3.1. Entity Seeding Automation | v1.0 | 1/1 | Complete | 2026-02-05 |
 | 5. Infrastructure | v2.0 | 2/2 | Complete | 2026-02-19 |
-| 6. Data Collection | v2.0 | 0/? | Not started | - |
+| 6. Data Collection | v2.0 | 0/4 | Not started | - |
 | 7. Tier 1 Sentiment + Aggregation | v2.0 | 0/? | Not started | - |
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 0/? | Not started | - |
 | 9. Frontend Evolution | v2.0 | 0/? | Not started | - |
