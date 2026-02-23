@@ -18,6 +18,7 @@ from pipeline.clients.reddit_client import (
 from pipeline.models import PostCreate
 from pipeline.services.filter_service import is_relevant
 from pipeline.services.storage_service import save_post
+from pipeline.services.mention_service import MentionExtractor, extract_and_save_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ async def run_collect_reddit(session: AsyncSession) -> dict:
         "filtered": 0,
         "duplicates": 0,
         "errors": 0,
+        "mentions_extracted": 0,
     }
 
     client_id = os.environ.get("REDDIT_CLIENT_ID")
@@ -61,6 +63,10 @@ async def run_collect_reddit(session: AsyncSession) -> dict:
         )
         stats["errors"] = 1
         return stats
+
+    # Initialize mention extractor once per job run (not per post)
+    extractor = MentionExtractor()
+    await extractor.load_entities(session)
 
     async def _process_subreddit(subreddit: str, strict_filter: bool) -> None:
         try:
@@ -86,6 +92,17 @@ async def run_collect_reddit(session: AsyncSession) -> dict:
             saved = await save_post(post, session)
             if saved:
                 stats["collected"] += 1
+                # Extract entity mentions for newly collected post
+                try:
+                    mention_count = await extract_and_save_mentions(
+                        session, saved.id, text, extractor
+                    )
+                    stats["mentions_extracted"] += mention_count
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to extract mentions for post %s: %s",
+                        normalized.get("external_id", "?"), exc,
+                    )
             else:
                 stats["duplicates"] += 1
 

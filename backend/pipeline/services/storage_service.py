@@ -27,20 +27,20 @@ def _strip_pii(text: str) -> str:
     return _EMAIL_PATTERN.sub('[email removed]', text)
 
 
-async def save_post(post_data: PostCreate, session: AsyncSession) -> bool:
+async def save_post(post_data: PostCreate, session: AsyncSession) -> "Post | None":
     """Persist a post to the database.
 
     Computes content_hash from URL (preferred) or body text, attempts INSERT,
-    and returns True if saved. Returns False if duplicate (IntegrityError) without
-    raising, so the caller can count duplicates and continue.
+    and returns the saved Post ORM object if saved. Returns None if duplicate
+    (IntegrityError) without raising, so the caller can count duplicates and continue.
 
     Args:
         post_data: Normalized post from any source collector.
         session: Active AsyncSession (provided by wrapped_job_execution).
 
     Returns:
-        True if the post was inserted successfully.
-        False if the post is a duplicate (content_hash or source+external_id conflict).
+        Post ORM object (truthy, with .id populated) if the post was inserted successfully.
+        None (falsy) if the post is a duplicate (content_hash or source+external_id conflict).
     """
     # Compute content hash — URL preferred over body (canonical dedup key)
     hash_input = post_data.url or post_data.body or ""
@@ -70,11 +70,12 @@ async def save_post(post_data: PostCreate, session: AsyncSession) -> bool:
     session.add(post)
     try:
         await session.commit()
-        return True
+        await session.refresh(post)
+        return post
     except IntegrityError:
         await session.rollback()
         logger.debug(
             "Duplicate post skipped: %s:%s (hash=%s)",
             post_data.source, post_data.external_id, content_hash,
         )
-        return False
+        return None

@@ -19,6 +19,7 @@ from pipeline.clients.hackernews_client import (
 from pipeline.models import PostCreate
 from pipeline.services.filter_service import is_relevant
 from pipeline.services.storage_service import save_post
+from pipeline.services.mention_service import MentionExtractor, extract_and_save_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +60,15 @@ async def run_collect_hackernews(session: AsyncSession) -> dict:
         "filtered": 0,
         "duplicates": 0,
         "errors": 0,
+        "mentions_extracted": 0,
     }
 
     since = datetime.now(timezone.utc) - timedelta(days=DEFAULT_LOOKBACK_DAYS)
     since_unix = int(since.timestamp())
+
+    # Initialize mention extractor once per job run (not per post)
+    extractor = MentionExtractor()
+    await extractor.load_entities(session)
 
     async with httpx.AsyncClient() as client:
         # Retry outer fetch; individual story comment fetches do best-effort
@@ -83,6 +89,17 @@ async def run_collect_hackernews(session: AsyncSession) -> dict:
             saved = await save_post(post, session)
             if saved:
                 stats["collected_stories"] += 1
+                # Extract entity mentions for newly collected story
+                try:
+                    mention_count = await extract_and_save_mentions(
+                        session, saved.id, text, extractor
+                    )
+                    stats["mentions_extracted"] += mention_count
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to extract mentions for post %s: %s",
+                        normalized.get("external_id", "?"), exc,
+                    )
             else:
                 stats["duplicates"] += 1
 
@@ -103,6 +120,17 @@ async def run_collect_hackernews(session: AsyncSession) -> dict:
                     c_saved = await save_post(c_post, session)
                     if c_saved:
                         stats["collected_comments"] += 1
+                        # Extract entity mentions for newly collected comment
+                        try:
+                            mention_count = await extract_and_save_mentions(
+                                session, c_saved.id, c_text, extractor
+                            )
+                            stats["mentions_extracted"] += mention_count
+                        except Exception as exc:
+                            logger.warning(
+                                "Failed to extract mentions for post %s: %s",
+                                c_normalized.get("external_id", "?"), exc,
+                            )
                     else:
                         stats["duplicates"] += 1
             except Exception as exc:
