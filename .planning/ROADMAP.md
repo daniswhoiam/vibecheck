@@ -29,6 +29,7 @@
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
 - [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
 - [x] **Phase 10: Verification & Documentation Cleanup** — Close orphaned INFRA requirements, fix stale docs (completed 2026-02-23)
+- [ ] **Phase 11: Entity Linking** — Populate post_entity_mentions to unblock aggregation, aspect extraction, and frontend data
 
 ## Phase Details
 
@@ -133,6 +134,18 @@ Plans:
 - [x] 10-01-PLAN.md — Create Phase 5 VERIFICATION.md and retrofit SUMMARY frontmatter (INFRA-01, INFRA-02, INFRA-03)
 - [ ] 10-02-PLAN.md — Update REQUIREMENTS.md traceability and ROADMAP.md progress/checkboxes
 
+### Phase 11: Entity Linking
+**Goal**: Posts are linked to their mentioned entities via post_entity_mentions, unblocking aggregation (Phase 7), aspect extraction (Phase 8), and frontend data display (Phase 9)
+**Depends on**: Phase 6, Phase 7
+**Requirements**: SENT-01, SENT-02, SENT-04, FRON-01, FRON-02
+**Gap Closure**: Closes critical integration gap from v2.0 audit — post_entity_mentions never populated
+**Success Criteria** (what must be TRUE):
+  1. Posts with entity mentions have corresponding PostEntityMention rows after the linking job runs
+  2. aggregate_sentiment produces non-empty SentimentRollup rows with source_breakdown data
+  3. extract_aspects processes posts through the LLM and creates AspectSentiment rows
+  4. Frontend source filter and aspect chart display real data (not empty state)
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -147,6 +160,7 @@ Plans:
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 5/5 | Complete | 2026-02-23 |
 | 9. Frontend Evolution | v2.0 | 6/6 | Complete | 2026-02-23 |
 | 10. Verification & Documentation Cleanup | v2.0 | Complete    | 2026-02-23 | 2026-02-23 |
+| 11. Entity Linking | v2.0 | Pending | — | — |
 
 ---
 *Roadmap created: 2026-02-05*

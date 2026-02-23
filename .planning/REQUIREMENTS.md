@@ -24,15 +24,15 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 ### Sentiment Analysis
 
-- [x] **SENT-01**: Tier 1 RoBERTa classifier scores every post as positive/negative/neutral with confidence
-- [x] **SENT-02**: Tier 2 LLM extracts structured aspect-level sentiment for non-neutral/low-confidence posts
+- [ ] **SENT-01**: Tier 1 RoBERTa classifier scores every post as positive/negative/neutral with confidence
+- [ ] **SENT-02**: Tier 2 LLM extracts structured aspect-level sentiment for non-neutral/low-confidence posts
 - [x] **SENT-03**: LLM backend is configurable via env vars (Groq, DeepInfra, or GPT-4o-mini)
-- [x] **SENT-04**: Aspect-level sentiment stored per tool mention (performance, cost, reliability, UX, speed, code quality, context window)
+- [ ] **SENT-04**: Aspect-level sentiment stored per tool mention (performance, cost, reliability, UX, speed, code quality, context window)
 
 ### Frontend
 
-- [x] **FRON-01**: User can see sentiment breakdown by data source (HN, Reddit, Discourse, Dev.to)
-- [x] **FRON-02**: User can see aspect-level sentiment charts per entity
+- [ ] **FRON-01**: User can see sentiment breakdown by data source (HN, Reddit, Discourse, Dev.to)
+- [ ] **FRON-02**: User can see aspect-level sentiment charts per entity
 
 ## Future Requirements
 
@@ -81,18 +81,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COLL-04 | 6 | Complete |
 | COLL-05 | 6 | Complete |
 | COLL-06 | 6 | Complete |
-| SENT-01 | 7 | Complete |
-| SENT-02 | 8 | Complete |
+| SENT-01 | 11 | Pending |
+| SENT-02 | 11 | Pending |
 | SENT-03 | 8 | Complete |
-| SENT-04 | 8 | Complete |
-| FRON-01 | 9 | Complete |
-| FRON-02 | 9 | Complete |
+| SENT-04 | 11 | Pending |
+| FRON-01 | 11 | Pending |
+| FRON-02 | 11 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 15 total
-- Mapped to phases: 15 (traceability complete — Phase 10)
-- Complete: 14 (INFRA-01/02, COLL-01..06, SENT-01..04, FRON-01/02)
+- Mapped to phases: 15
+- Complete: 9 (INFRA-01/02, COLL-01..06, SENT-03)
 - Resolved/Superseded: 1 (INFRA-03 — Render tier replaced by platform migration)
+- Pending: 5 (SENT-01, SENT-02, SENT-04, FRON-01, FRON-02 — reassigned to Phase 11)
 - Unmapped: 0
 
 ---
