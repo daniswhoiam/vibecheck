@@ -28,6 +28,7 @@
 - [x] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended (completed 2026-02-23)
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
 - [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
+- [ ] **Phase 10: Verification & Documentation Cleanup** — Close orphaned INFRA requirements, fix stale docs
 
 ## Phase Details
 
@@ -115,6 +116,18 @@ Plans:
 - [ ] 09-04-PLAN.md — AspectSentimentChart component: horizontal diverging bar chart for 7 aspects
 - [ ] 09-05-PLAN.md — Detail.tsx integration: wire source filter + aspect section, URL persistence, full test suite GREEN
 - [ ] 09-06-PLAN.md — Visual checkpoint: user verification of complete Phase 9 UI experience
+
+### Phase 10: Verification & Documentation Cleanup
+**Goal**: All v2.0 requirements are formally verified, REQUIREMENTS.md traceability is complete, and ROADMAP.md reflects accurate completion state
+**Depends on**: Phase 9
+**Requirements**: INFRA-01, INFRA-02, INFRA-03
+**Gap Closure**: Closes orphaned requirements from v2.0 audit (documentation-level gaps only)
+**Success Criteria** (what must be TRUE):
+  1. Phase 5 VERIFICATION.md exists and confirms INFRA-01/02 implementation against codebase evidence
+  2. INFRA-03 is resolved (verified or documented as manual deployment config)
+  3. REQUIREMENTS.md traceability table has correct Phase assignments and status for all 15 requirements
+  4. ROADMAP.md plan checkboxes and progress rows accurately reflect completion state
+**Plans**: TBD (use `/gsd:plan-phase 10`)
 
 ## Progress
 

@@ -72,9 +72,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
+| INFRA-01 | 10 | Pending |
+| INFRA-02 | 10 | Pending |
+| INFRA-03 | 10 | Pending |
 | COLL-01 | — | Complete |
 | COLL-02 | — | Complete |
 | COLL-03 | — | Complete |
@@ -90,8 +90,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **Coverage:**
 - v2.0 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 (pending roadmap creation)
+- Mapped to phases: 3
+- Unmapped: 12 (traceability table update pending in Phase 10)
 
 ---
 *Requirements defined: 2026-02-19*
