@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 09-frontend-evolution (Plan 4 of 5)
-Plan: 09-04
+Phase: 09-frontend-evolution (Plan 5 of 5)
+Plan: 09-05
 Status: Complete
-Last activity: 2026-02-23 — Completed 09-04 (AspectSentimentChart: horizontal diverging bar chart for 7 sentiment aspects using Recharts, sort by score, empty state, insufficient-data inline labels, all 4 tests GREEN)
+Last activity: 2026-02-23 — Completed 09-05 (Detail page integration: SourceFilterToggle + URL persistence + AspectSentimentChart + client-side mentions filtering, 14/14 tests GREEN)
 
 ## Accumulated Context
 
@@ -110,6 +110,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - ResizeObserver polyfill added to src/test/setup.ts — Recharts ResponsiveContainer requires it to avoid ReferenceError in jsdom
 - Empty state source label: source && source !== 'all' ? capitalize(source) : 'this source' — covers both filter and no-filter cases
 
+**09-05 (2026-02-23):**
+- useSearchParams persists source filter in URL — prev.delete("source") for "all" (clean URL), prev.set("source", value) for specific source
+- Client-side mentions filtering uses sourceDisplayMap with case-insensitive substring matching to handle display name variations
+- Trend chart simplified to aggregate-only line — source-filtered timeseries requires future backend change (per plan spec)
+- Pre-existing missing deps (SentimentBar, SearchDropdown, useLanguage) created as minimal stubs to unblock tests
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -127,8 +133,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
-Stopped at: Completed 09-04-PLAN.md (AspectSentimentChart: horizontal diverging bar chart, 4/4 unit tests GREEN)
-Resume: Phase 09, Plan 5 of 5 — Detail page integration (SourceFilterToggle + AspectSentimentChart)
+Stopped at: Completed 09-05-PLAN.md (Detail page integration: SourceFilterToggle + URL persistence + AspectSentimentChart, 14/14 tests GREEN)
+Resume: Phase 09 complete — all 5 plans executed, FRON-01 and FRON-02 fulfilled
 
 Config:
 {
