@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 08-tier-2-llm-aspect-extraction (Plan 1 of 5)
-Plan: 08-01
+Phase: 08-tier-2-llm-aspect-extraction (Plan 2 of 5)
+Plan: 08-02
 Status: Complete
-Last activity: 2026-02-23 — Completed 08-01 (TDD RED phase: failing test scaffolds for LLM provider, aspect extraction, aspect API)
+Last activity: 2026-02-23 — Completed 08-02 (LLM provider abstraction: GroqProvider, OpenAIProvider, Pydantic validation, 11 tests GREEN)
 
 ## Accumulated Context
 
@@ -73,6 +73,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - All 7 aspects stored per entity per post (not sparse) — avoids ambiguity between "not mentioned" and "neutral=0.0"
 - Unmatched LLM entity names (not in PostEntityMention) are silently skipped, not treated as errors
 - Stats dict contract: {routed, extracted, errors} — all three keys must be present even on empty run
+- [Phase 08-02]: AspectScoresSchema fields required (no defaults) to catch incomplete LLM output
+- [Phase 08-02]: Module-level Groq/AsyncOpenAI imports (try/except ImportError) for test patchability
+- [Phase 08-02]: extra='ignore' on AspectScoresSchema silently drops unknown aspects from LLM output
 
 ### Known Tech Debt
 
@@ -91,8 +94,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
-Stopped at: Completed 08-01-PLAN.md (TDD RED phase: failing test scaffolds for LLM provider, aspect extraction, aspect API)
-Resume: Phase 08 plan 1 of 5 complete — continue with 08-02 (LLM provider implementation)
+Stopped at: Completed 08-02-PLAN.md (LLM provider abstraction: GroqProvider, OpenAIProvider, Pydantic validation, 11 tests GREEN)
+Resume: Phase 08 plan 2 of 5 complete — continue with 08-03 (aspect extraction job)
 
 Config:
 {
