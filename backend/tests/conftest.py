@@ -43,9 +43,19 @@ def _install_stubs_if_needed() -> None:
     # Light optional libraries that may be missing locally
     for name in (
         "transformers", "torch", "groq", "openai",
-        "tenacity", "asyncpraw", "numpy",
+        "asyncpraw", "numpy",
     ):
         sys.modules.setdefault(name, MagicMock())
+
+    # tenacity: stub retry as pass-through decorator so @retry(...)(fn) == fn.
+    # If tenacity is already installed (Docker env), setdefault is a no-op.
+    if "tenacity" not in sys.modules:
+        _tenacity_stub = MagicMock()
+        # retry(stop=..., wait=..., reraise=True)(func) → func (identity)
+        _tenacity_stub.retry = lambda **kwargs: (lambda fn: fn)
+        _tenacity_stub.stop_after_attempt = MagicMock()
+        _tenacity_stub.wait_exponential = MagicMock()
+        sys.modules["tenacity"] = _tenacity_stub
 
     # pgvector must be stubbed before db.models (provides Vector column type)
     pgvector_stub = MagicMock()
@@ -54,10 +64,13 @@ def _install_stubs_if_needed() -> None:
     sys.modules.setdefault("pgvector", pgvector_stub)
     sys.modules.setdefault("pgvector.sqlalchemy", pgvector_sqlalchemy_stub)
 
-    # Scheduler / pipeline (not needed for API-layer tests)
+    # Scheduler / pipeline submodules that import unavailable packages
+    # NOTE: "pipeline" itself is NOT stubbed — the real package must be importable
+    # so that pipeline.jobs.extract_aspects and pipeline.services.llm_provider work.
+    # Only stub the specific submodule that imports APScheduler.
     for name in (
         "apscheduler", "apscheduler.schedulers", "apscheduler.schedulers.asyncio",
-        "pipeline", "pipeline.scheduler",
+        "pipeline.scheduler",
         "scripts", "scripts.seed_entities",
     ):
         sys.modules.setdefault(name, MagicMock())
@@ -131,6 +144,12 @@ class _ChainableQuery:
     def desc(self, *args, **kwargs):
         return self
 
+    def join(self, *args, **kwargs):
+        return self
+
+    def __invert__(self):
+        return self
+
 
 def _make_mock_select():
     """Return a callable that replaces sqlalchemy.select in the entities module."""
@@ -183,7 +202,7 @@ def _make_request_aware_get_session():
 
 @pytest.fixture(autouse=True)
 def _api_test_compat():
-    """Ensure FastAPI API tests run correctly in both Docker and local environments.
+    """Ensure tests run correctly in both Docker and local Python 3.14 environments.
 
     What this fixture does:
     1. Patches `select` in `api.routes.entities` with a chainable mock so that
@@ -192,15 +211,74 @@ def _api_test_compat():
     2. Sets `app.dependency_overrides[get_session]` with a request-aware override
        that uses the HTTP request's path params to simulate entity-found or
        entity-not-found behavior without a real database connection.
+    3. Patches `select`, `exists`, `and_` in `pipeline.jobs.extract_aspects` so
+       that SQLAlchemy query construction doesn't fail when db.models is a MagicMock
+       (local Python 3.14 env where `metadata` column name is reserved by SQLAlchemy).
 
     This is an autouse fixture so it applies to all tests in this directory.
     Tests that don't use TestClient are unaffected at the HTTP level.
     """
+    # Patch pipeline.jobs.extract_aspects SQLAlchemy query builders if available.
+    # Needed in Python 3.14 local env where db.models is a MagicMock stub (because
+    # SQLAlchemy 2.0.35+ reserves the 'metadata' attribute name, breaking Post model).
+    # In Docker (Python 3.12), real models are used — these patches are no-ops there.
+    _ea_patches = []
+    try:
+        import pipeline.jobs.extract_aspects as _ea
+
+        # Column mock: supports all SQLAlchemy comparison/filter operators.
+        class _MockColumn:
+            """Supports all comparison operators used in SQLAlchemy WHERE clauses."""
+
+            def __lt__(self, other): return MagicMock()
+            def __gt__(self, other): return MagicMock()
+            def __le__(self, other): return MagicMock()
+            def __ge__(self, other): return MagicMock()
+            def __eq__(self, other): return MagicMock()
+            def __ne__(self, other): return MagicMock()
+            def __invert__(self): return MagicMock()
+            def isnot(self, other): return MagicMock()
+            def in_(self, other): return MagicMock()
+
+        class _MockModelMeta(type):
+            """Metaclass that returns _MockColumn for any class-level attribute access."""
+            def __getattr__(cls, name):
+                return _MockColumn()
+
+        class _MockModel(metaclass=_MockModelMeta):
+            """Stub SQLAlchemy model: column attribute access returns _MockColumn.
+
+            Instances accept any keyword arguments (simulates ORM constructor).
+            """
+
+            def __init__(self, **kwargs):
+                for k, v in kwargs.items():
+                    object.__setattr__(self, k, v)
+
+        _ea_patches = [
+            patch.object(_ea, "select", _make_mock_select()),
+            patch.object(_ea, "exists", MagicMock(return_value=_ChainableQuery())),
+            patch.object(_ea, "and_", MagicMock(return_value=MagicMock())),
+            patch.object(_ea, "Post", _MockModel),
+            patch.object(_ea, "PostEntityMention", _MockModel),
+            patch.object(_ea, "AspectSentiment", _MockModel),
+            patch.object(_ea, "Entity", _MockModel),
+        ]
+        for p in _ea_patches:
+            p.start()
+    except Exception:
+        pass
+
     try:
         from main import app
         import api.routes.entities as _ent
     except Exception:
         yield
+        for p in reversed(_ea_patches):
+            try:
+                p.stop()
+            except Exception:
+                pass
         return
 
     app.dependency_overrides[_ent.get_session] = _make_request_aware_get_session()
@@ -211,6 +289,11 @@ def _api_test_compat():
 
     # Cleanup
     app.dependency_overrides.pop(_ent.get_session, None)
+    for p in reversed(_ea_patches):
+        try:
+            p.stop()
+        except Exception:
+            pass
 
 
 @pytest.fixture
