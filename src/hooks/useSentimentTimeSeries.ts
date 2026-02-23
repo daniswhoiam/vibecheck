@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 // Backend API response types for time-series data
-interface SentimentPoint {
+export interface SentimentPoint {
   timestamp: string;
   period: string;
   sentiment_mean: number | null;
