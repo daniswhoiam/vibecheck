@@ -1,58 +1,42 @@
-"""Sentiment time-series response schemas for API endpoints.
+"""Sentiment time-series response schemas for VibeCheck API v2.
 
-Provides schemas for querying sentiment trends over time for entities.
-All datetime fields use ISO 8601 format (FastAPI default).
+Phase 7: Responses now include per-source sentiment breakdown in each data point.
+Source breakdown structure: {"hn": {"mean": 0.4, "count": 12}, "reddit": {...}}
 """
 from datetime import datetime
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, ConfigDict
-from typing import List, Optional
 
 
 class SentimentPointSchema(BaseModel):
-    """Single time-series data point for sentiment.
-
-    Represents sentiment statistics aggregated over a time period (hourly or daily).
+    """Single daily sentiment data point with per-source breakdown.
 
     Attributes:
-        timestamp: Time period start (ISO 8601)
-        period: Aggregation period ("hourly" or "daily")
-        sentiment_mean: Average sentiment score (-1 to 1)
-        sentiment_min: Minimum sentiment score in period
-        sentiment_max: Maximum sentiment score in period
-        sentiment_std: Standard deviation of sentiment scores
-        article_count: Number of articles in period
-        reddit_sentiment: Average Reddit sentiment score (-1 to 1)
-        reddit_thread_count: Number of Reddit threads in period
+        rollup_date: UTC date for this rollup bucket (midnight UTC timestamp)
+        sentiment_mean: Signed mean sentiment in [-1.0, 1.0]
+            (Positive=+1.0, Negative=-1.0, Neutral=0.0 weighted average)
+        post_count: Total posts contributing to this day's rollup
+        source_breakdown: Per-source mean and count, e.g.:
+            {"hn": {"mean": 0.4, "count": 12}, "reddit": {"mean": -0.1, "count": 8}}
     """
-
-    timestamp: datetime
-    period: str
-    sentiment_mean: float | None
-    sentiment_min: float | None
-    sentiment_max: float | None
-    sentiment_std: float | None
-    article_count: int | None
-    reddit_sentiment: float | None
-    reddit_thread_count: int | None
+    rollup_date: datetime
+    sentiment_mean: Optional[float]
+    post_count: int
+    source_breakdown: Optional[Dict[str, Any]]
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class SentimentTimeseriesResponse(BaseModel):
-    """Paginated time-series response for entity sentiment queries.
-
-    Contains sentiment data points with cursor-based pagination for large datasets.
+    """Paginated response for entity sentiment time-series query.
 
     Attributes:
         entity_id: Entity identifier
-        period: Aggregation period used for query
-        data: Array of sentiment data points (reverse chronological)
-        next_cursor: ISO timestamp for fetching next page (None if last page)
-        has_more: Whether more data points exist beyond this page
+        data: Array of daily sentiment points (reverse chronological)
+        next_cursor: ISO timestamp for next page (None if last page)
+        has_more: Whether more data exists beyond this page
     """
-
     entity_id: int
-    period: str
     data: List[SentimentPointSchema]
-    next_cursor: str | None
+    next_cursor: Optional[str]
     has_more: bool
