@@ -89,7 +89,14 @@ Plans:
   1. Posts routed to Tier 2 have aspect_sentiments rows covering at least one of the seven defined aspects (performance, cost, reliability, UX, speed, code quality, context window)
   2. Changing the LLM_PROVIDER env var to a different provider (Groq, DeepInfra, GPT-4o-mini) results in the new provider handling Tier 2 requests without code changes
   3. A new entity aspect endpoint returns aspect scores when queried for an entity with accumulated Tier 2 data
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — TDD Wave 0: failing test scaffolds for provider, extraction, and aspect API
+- [ ] 08-02-PLAN.md — LLM provider abstraction: GroqProvider, OpenAIProvider, get_llm_provider factory, Pydantic validation
+- [ ] 08-03-PLAN.md — Aspect API endpoint: GET /entities/{id}/aspects with 7d/30d/90d windows and source filter
+- [ ] 08-04-PLAN.md — Aspect extraction job: run_extract_aspects with confidence routing and per-entity aspect storage
+- [ ] 08-05-PLAN.md — Scheduler wiring: extract_aspects as Step 4 in collect→score→aggregate→extract pipeline chain
 
 ### Phase 9: Frontend Evolution
 **Goal**: Users can see which data sources are driving sentiment and can explore aspect-level breakdowns per entity
