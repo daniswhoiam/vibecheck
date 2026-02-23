@@ -19,40 +19,63 @@ from db.models import SentimentRollup
 
 logger = logging.getLogger(__name__)
 
-# Raw SQL for aggregation — using jsonb_object_agg for per-source breakdown.
-# Application-side aggregation would be much slower and more error-prone.
+# Raw SQL for aggregation — using a CTE to compute per-source aggregates first,
+# then jsonb_object_agg to build the source_breakdown JSON.
+#
+# PostgreSQL does not allow nested aggregate function calls, so the per-source
+# AVG and COUNT must be computed in an inner GROUP BY before being aggregated
+# into a JSON object with jsonb_object_agg in the outer query.
+#
 # sentiment_score in posts stores confidence (0-1); for aggregation we map:
 #   Positive -> +1.0, Negative -> -1.0, Neutral -> 0.0
 # This produces a signed sentiment_mean in [-1.0, 1.0] suitable for the API.
 _AGG_QUERY = text("""
-    SELECT
-        pem.entity_id,
-        ROUND(AVG(
-            CASE p.sentiment_label
-                WHEN 'Positive' THEN 1.0
-                WHEN 'Negative' THEN -1.0
-                ELSE 0.0
-            END
-        )::numeric, 3) AS sentiment_mean,
-        COUNT(*)::int AS post_count,
-        jsonb_object_agg(
+    WITH per_source AS (
+        SELECT
+            pem.entity_id,
             p.source,
-            jsonb_build_object(
-                'mean', ROUND(AVG(
-                    CASE p.sentiment_label
-                        WHEN 'Positive' THEN 1.0
-                        WHEN 'Negative' THEN -1.0
-                        ELSE 0.0
-                    END
-                )::numeric, 3),
-                'count', COUNT(*)::int
-            )
+            ROUND(AVG(
+                CASE p.sentiment_label
+                    WHEN 'Positive' THEN 1.0
+                    WHEN 'Negative' THEN -1.0
+                    ELSE 0.0
+                END
+            )::numeric, 3) AS source_mean,
+            COUNT(*)::int AS source_count
+        FROM posts p
+        JOIN post_entity_mentions pem ON p.id = pem.post_id
+        WHERE DATE(p.published_at AT TIME ZONE 'UTC') = :today
+          AND p.sentiment_label IS NOT NULL
+        GROUP BY pem.entity_id, p.source
+    ),
+    per_entity AS (
+        SELECT
+            pem.entity_id,
+            ROUND(AVG(
+                CASE p.sentiment_label
+                    WHEN 'Positive' THEN 1.0
+                    WHEN 'Negative' THEN -1.0
+                    ELSE 0.0
+                END
+            )::numeric, 3) AS sentiment_mean,
+            COUNT(*)::int AS post_count
+        FROM posts p
+        JOIN post_entity_mentions pem ON p.id = pem.post_id
+        WHERE DATE(p.published_at AT TIME ZONE 'UTC') = :today
+          AND p.sentiment_label IS NOT NULL
+        GROUP BY pem.entity_id
+    )
+    SELECT
+        pe.entity_id,
+        pe.sentiment_mean,
+        pe.post_count,
+        jsonb_object_agg(
+            ps.source,
+            jsonb_build_object('mean', ps.source_mean, 'count', ps.source_count)
         ) AS source_breakdown
-    FROM posts p
-    JOIN post_entity_mentions pem ON p.id = pem.post_id
-    WHERE DATE(p.published_at AT TIME ZONE 'UTC') = :today
-      AND p.sentiment_label IS NOT NULL
-    GROUP BY pem.entity_id
+    FROM per_entity pe
+    JOIN per_source ps ON pe.entity_id = ps.entity_id
+    GROUP BY pe.entity_id, pe.sentiment_mean, pe.post_count
 """)
 
 

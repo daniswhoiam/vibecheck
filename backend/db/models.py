@@ -53,8 +53,10 @@ class Post(Base):
     url: Mapped[str | None] = mapped_column(Text, nullable=True)
     title: Mapped[str | None] = mapped_column(String(500), nullable=True)
     body: Mapped[str | None] = mapped_column(Text, nullable=True)
-    content_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
-    metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # NOTE: TimescaleDB requires unique constraints to include the partition key (published_at).
+    # content_hash uses a regular index (not unique) — dedup handled at application level.
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    post_metadata: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
     embedding: Mapped[np.ndarray | None] = mapped_column(Vector(384), nullable=True)
     published_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), nullable=False, index=True, primary_key=True
@@ -65,16 +67,23 @@ class Post(Base):
     sentiment_label: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
     sentiment_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    # Relationships
+    # Relationships — viewonly because post_id has no DB-level FK
+    # (TimescaleDB does not allow FK constraints referencing a hypertable)
+    # viewonly=True: cascade and back-population require a real FK; use these for reads only.
     entity_mentions: Mapped[list["PostEntityMention"]] = relationship(
-        back_populates="post", cascade="all, delete-orphan"
+        primaryjoin="Post.id == foreign(PostEntityMention.post_id)",
+        viewonly=True,
+        foreign_keys="[PostEntityMention.post_id]",
     )
     aspect_sentiments: Mapped[list["AspectSentiment"]] = relationship(
-        back_populates="post", cascade="all, delete-orphan"
+        primaryjoin="Post.id == foreign(AspectSentiment.post_id)",
+        viewonly=True,
+        foreign_keys="[AspectSentiment.post_id]",
     )
 
     __table_args__ = (
-        UniqueConstraint('source', 'external_id', name='uq_posts_source_external_id'),
+        # TimescaleDB: unique constraints must include partition key published_at
+        UniqueConstraint('source', 'external_id', 'published_at', name='uq_posts_source_external_id'),
     )
 
 
@@ -95,9 +104,11 @@ class PostEntityMention(Base):
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
     )
 
-    # Relationships — foreign_keys must be explicit because post_id has no DB-level FK
+    # viewonly relationship to Post — no DB-level FK (TimescaleDB hypertable constraint)
     post: Mapped["Post"] = relationship(
-        back_populates="entity_mentions", foreign_keys="[PostEntityMention.post_id]"
+        primaryjoin="PostEntityMention.post_id == foreign(Post.id)",
+        foreign_keys="[PostEntityMention.post_id]",
+        viewonly=True,
     )
     entity: Mapped["Entity"] = relationship(back_populates="post_mentions")
 
@@ -130,9 +141,11 @@ class AspectSentiment(Base):
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
     )
 
-    # Relationships — foreign_keys must be explicit because post_id has no DB-level FK
+    # viewonly relationship to Post — no DB-level FK (TimescaleDB hypertable constraint)
     post: Mapped["Post"] = relationship(
-        back_populates="aspect_sentiments", foreign_keys="[AspectSentiment.post_id]"
+        primaryjoin="AspectSentiment.post_id == foreign(Post.id)",
+        foreign_keys="[AspectSentiment.post_id]",
+        viewonly=True,
     )
     entity: Mapped["Entity"] = relationship(back_populates="aspect_sentiments")
 

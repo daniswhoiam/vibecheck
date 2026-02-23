@@ -30,7 +30,8 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     print("Starting up application...")
-    run_migrations()  # Run database migrations
+    # NOTE: Database migrations are handled by docker-entrypoint.sh (alembic upgrade head)
+    # before the FastAPI server starts. No need to run them here.
 
     # Setup and start scheduler
     setup_jobs()

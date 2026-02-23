@@ -17,8 +17,9 @@ asyncpraw==7.8.1
 apscheduler==3.10.4
 
 # ML / Sentiment
-transformers==4.39.3
-torch==2.0.1
+numpy>=1.24.0
+transformers>=4.39.3
+torch>=2.2.0
 
 # LLM Tier 2 (Phase 8)
 groq==0.10.0

@@ -23,22 +23,17 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    """Add unique constraint to sentiment_timeseries table."""
+    """No-op: sentiment_timeseries was dropped in 006_reset_schema.
 
-    # Create unique constraint on (entity_id, timestamp, period)
-    # This enables proper upsert behavior in sentiment_service.py
-    op.create_unique_constraint(
-        'uq_sentiment_timeseries_entity_timestamp_period',
-        'sentiment_timeseries',
-        ['entity_id', 'timestamp', 'period']
-    )
+    Originally this added a unique constraint to sentiment_timeseries,
+    but that table no longer exists after 006_reset_schema. When the DB
+    is migrated fresh (from revision 001 through 009_merge_heads),
+    006_reset_schema runs before this migration in the new-schema branch,
+    so the table is already gone by the time this runs.
+    """
+    pass
 
 
 def downgrade() -> None:
-    """Remove unique constraint from sentiment_timeseries table."""
-
-    op.drop_constraint(
-        'uq_sentiment_timeseries_entity_timestamp_period',
-        'sentiment_timeseries',
-        type_='unique'
-    )
+    """No-op downgrade."""
+    pass

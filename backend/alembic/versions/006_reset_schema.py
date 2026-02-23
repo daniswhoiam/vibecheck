@@ -22,6 +22,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # === 0. Widen alembic_version.version_num to accommodate descriptive revision IDs ===
+    # Default is varchar(32); revision IDs like '007_add_sentiment_columns_to_posts' (35 chars)
+    # exceed this limit. Widen to varchar(64) before applying subsequent migrations.
+    op.execute("ALTER TABLE alembic_version ALTER COLUMN version_num TYPE VARCHAR(64)")
+
     # === 1. Drop old tables (FK-safe order: children before parents) ===
     op.execute("DROP TABLE IF EXISTS sentiment_timeseries CASCADE")
     op.execute("DROP TABLE IF EXISTS articles CASCADE")
@@ -44,6 +49,10 @@ def upgrade() -> None:
     )
 
     # === 4. Create posts table ===
+    # NOTE: TimescaleDB requires ALL unique constraints to include the partitioning column
+    # (published_at). We use a regular index on content_hash (not unique constraint) and
+    # handle deduplication at the application layer via SELECT-before-INSERT or
+    # ON CONFLICT DO NOTHING on source+external_id+published_at.
     op.create_table(
         'posts',
         sa.Column('id', sa.BigInteger(), sa.Identity(), nullable=False),
@@ -59,8 +68,8 @@ def upgrade() -> None:
         sa.Column('created_at', sa.TIMESTAMP(timezone=True), nullable=False,
                   server_default=sa.func.now()),
         sa.PrimaryKeyConstraint('id', 'published_at'),
-        sa.UniqueConstraint('content_hash', name='uq_posts_content_hash'),
-        sa.UniqueConstraint('source', 'external_id', name='uq_posts_source_external_id'),
+        # TimescaleDB unique constraints MUST include the partition key (published_at)
+        sa.UniqueConstraint('source', 'external_id', 'published_at', name='uq_posts_source_external_id'),
     )
 
     # === 5. Convert posts to TimescaleDB hypertable (partition by published_at) ===
@@ -69,6 +78,9 @@ def upgrade() -> None:
     )
 
     # === 6. Useful indexes on posts ===
+    # content_hash uses a regular index (not unique) — TimescaleDB unique constraints
+    # require the partition key, but content_hash dedup uses app-level checking.
+    op.create_index('ix_posts_content_hash', 'posts', ['content_hash'])
     op.create_index('ix_posts_source', 'posts', ['source'])
     op.create_index('ix_posts_published_at', 'posts', ['published_at'])
 
@@ -121,3 +133,4 @@ def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS entities")
     op.execute("DROP EXTENSION IF EXISTS vector")
     op.execute("DROP EXTENSION IF EXISTS timescaledb CASCADE")
+    # Note: unique constraint uq_posts_content_hash was dropped in favour of ix_posts_content_hash

@@ -71,6 +71,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        version_num_col_type=__import__('sqlalchemy').String(64),
     )
 
     with context.begin_transaction():
@@ -104,6 +105,9 @@ def do_run_migrations(connection):
         target_metadata=target_metadata,
         include_schemas=True,
         include_object=include_object,
+        # Revision IDs like '007_add_sentiment_columns_to_posts' exceed varchar(32) default.
+        # Set version_num to varchar(64) to accommodate descriptive revision IDs.
+        version_num_col_type=__import__('sqlalchemy').String(64),
     )
 
     with context.begin_transaction():

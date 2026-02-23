@@ -1,11 +1,16 @@
 """Sentiment classification service for VibeCheck Phase 7.
 
-Provides zero-shot sentiment classification using GliClass (knowledgator/gliclass-base-v1.0-lw).
+Provides zero-shot sentiment classification using a cross-encoder NLI model.
 Model is loaded on-demand per job run and unloaded after classification to minimize
 memory footprint between 6-hour collection cycles.
 
 Classification labels: Positive / Negative / Neutral
 Confidence score: float 0.0–1.0 (higher = more confident in the top label)
+
+NOTE: Originally used knowledgator/gliclass-base-v1.0-lw (GLiClass architecture),
+but that model type is not compatible with transformers>=5.0. Switched to
+cross-encoder/nli-MiniLM2-L6-H768 which is a compact (~100MB) NLI model that
+supports zero-shot-classification in standard transformers.
 """
 import asyncio
 import logging
@@ -13,9 +18,9 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Model identifier — lightweight variant (~0.2B params) for memory-constrained deployment.
-# Fallback to "knowledgator/gliclass-modern-base-v2.0" if accuracy is insufficient.
-DEFAULT_MODEL_ID = "knowledgator/gliclass-base-v1.0-lw"
+# Model identifier — compact NLI model compatible with transformers >= 4.39.
+# cross-encoder/nli-MiniLM2-L6-H768: ~100MB, fast on CPU, good zero-shot perf.
+DEFAULT_MODEL_ID = "cross-encoder/nli-MiniLM2-L6-H768"
 
 # Candidate labels for zero-shot classification (order matters — first is ranked highest
 # by the NLI model when probability mass is split evenly, so put most common first)

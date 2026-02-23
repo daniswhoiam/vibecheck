@@ -18,9 +18,10 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   postgres:
-    # TimescaleDB HA image includes TimescaleDB + pgvector pre-installed.
-    # If upgrading from postgres:16-alpine, run: docker-compose down -v
-    image: timescale/timescaledb-ha:pg16-latest
+    # timescale/timescaledb:latest-pg16 requires shared_preload_libraries configuration
+    # to enable the TimescaleDB extension. The command below adds this config.
+    image: timescale/timescaledb:latest-pg16
+    command: postgres -c shared_preload_libraries=timescaledb
     environment:
       POSTGRES_DB: vibecheck
       POSTGRES_USER: vibecheck

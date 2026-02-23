@@ -1,8 +1,12 @@
 """Storage service for persisting collected posts to the database.
 
-Implements duplicate rejection via the content_hash UNIQUE constraint on the
-posts table. IntegrityError on INSERT means the post is a duplicate — return
-False without raising, so collectors can continue processing.
+Implements duplicate rejection via the (source, external_id, published_at) UNIQUE
+constraint on the posts table. IntegrityError on INSERT means the post is a
+duplicate — return None without raising, so collectors can continue processing.
+
+NOTE: content_hash is stored as a regular index (not unique constraint) because
+TimescaleDB hypertables require all unique constraints to include the partition key
+(published_at). Primary dedup key is (source, external_id, published_at).
 """
 import logging
 import re
@@ -40,7 +44,7 @@ async def save_post(post_data: PostCreate, session: AsyncSession) -> "Post | Non
 
     Returns:
         Post ORM object (truthy, with .id populated) if the post was inserted successfully.
-        None (falsy) if the post is a duplicate (content_hash or source+external_id conflict).
+        None (falsy) if the post is a duplicate (source+external_id+published_at conflict).
     """
     # Compute content hash — URL preferred over body (canonical dedup key)
     hash_input = post_data.url or post_data.body or ""
@@ -65,7 +69,7 @@ async def save_post(post_data: PostCreate, session: AsyncSession) -> "Post | Non
         body=body,
         content_hash=content_hash,
         published_at=post_data.published_at,
-        metadata=post_data.metadata,
+        post_metadata=post_data.metadata,
     )
     session.add(post)
     try:
