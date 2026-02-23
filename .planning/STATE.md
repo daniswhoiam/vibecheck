@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 08-tier-2-llm-aspect-extraction (Plan 3 of 5)
-Plan: 08-03
+Phase: 08-tier-2-llm-aspect-extraction (Plan 4 of 5)
+Plan: 08-04
 Status: Complete
-Last activity: 2026-02-23 — Completed 08-03 (aspect API endpoint: GET /entities/{id}/aspects, schemas, 10/10 tests GREEN)
+Last activity: 2026-02-23 — Completed 08-04 (extract_aspects.py job: routing query, LLM call, aspect storage, 30/30 tests GREEN)
 
 ## Accumulated Context
 
@@ -80,6 +80,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 08]: INTERVAL f-string substitution (not bind param) for PostgreSQL time window queries — safe because days value is whitelist-validated
 - [Phase 08]: FastAPI dependency_overrides (not patch()) is the correct mechanism for mocking Depends() in tests — patch() only affects module namespace, not FastAPI's captured function reference
 
+**08-04 (2026-02-23):**
+- JOIN PostEntityMention + Entity in single query (not 2-step) — matches test mock structure (entity_id and name on same row), one less execute() call
+- session.add() for AspectSentiment (not pg_insert ON CONFLICT) — simpler, compatible with test assertions on add() call count; DB UniqueConstraint provides conflict safety
+- conftest _MockModel metaclass pattern: class-level __getattr__ needed (not instance) for SQLAlchemy column access via Post.sentiment_score — reuse for future test files
+- tenacity identity-decorator stub in conftest: retry = lambda **kwargs: (lambda fn: fn) makes @retry() no-op, enabling local testing without tenacity installed
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -97,8 +103,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
-Stopped at: Completed 08-03-PLAN.md (aspect API endpoint: GET /entities/{id}/aspects, schemas, 10/10 tests GREEN)
-Resume: Phase 08 plan 3 of 5 complete — continue with 08-04 (extract_aspects.py job: routing logic, storage)
+Stopped at: Completed 08-04-PLAN.md (extract_aspects.py job: routing query, LLM call, aspect storage, 30/30 tests GREEN)
+Resume: Phase 08 plan 4 of 5 complete — continue with 08-05 (scheduler pipeline chain integration)
 
 Config:
 {
