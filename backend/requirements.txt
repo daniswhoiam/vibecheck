@@ -16,6 +16,10 @@ asyncpraw==7.8.1
 # Job scheduling
 apscheduler==3.10.4
 
+# ML / Sentiment
+transformers==4.39.3
+torch==2.0.1
+
 # Configuration
 python-dotenv==1.0.0
 
