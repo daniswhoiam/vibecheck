@@ -23,6 +23,7 @@ from pipeline.jobs.collect_devto import run_collect_devto
 from pipeline.jobs.score_sentiment import run_score_sentiment
 from pipeline.jobs.aggregate_sentiment import run_aggregate_sentiment
 from pipeline.jobs.extract_aspects import run_extract_aspects
+from pipeline.jobs.extract_entity_mentions import run_backfill_entity_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -275,6 +276,31 @@ def setup_jobs() -> None:
             job_name,
             (now + timedelta(minutes=delay_minutes)).isoformat(),
         )
+
+    # Backfill entity mentions — runs once immediately on startup
+    # Populates post_entity_mentions for all existing posts before the regular
+    # collection→score→aggregate pipeline cycles begin.
+    # Runs 5 minutes after startup to let the DB stabilize after app start.
+    async def _run_backfill():
+        async with AsyncSessionLocal() as db_session:
+            await wrapped_job_execution(
+                "backfill_entity_mentions",
+                run_backfill_entity_mentions,
+                db_session,
+            )
+
+    scheduler.add_job(
+        _run_backfill,
+        trigger="date",  # Run once at a specific time
+        run_date=now + timedelta(minutes=5),
+        id="backfill_entity_mentions",
+        replace_existing=True,
+        name="backfill_entity_mentions",
+    )
+    logger.info(
+        "Registered one-time backfill job 'backfill_entity_mentions' — runs at %s",
+        (now + timedelta(minutes=5)).isoformat(),
+    )
 
 
 async def get_job_health() -> dict[str, Any]:
