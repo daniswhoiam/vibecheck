@@ -24,10 +24,10 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 ### Sentiment Analysis
 
-- [ ] **SENT-01**: Tier 1 RoBERTa classifier scores every post as positive/negative/neutral with confidence
-- [ ] **SENT-02**: Tier 2 LLM extracts structured aspect-level sentiment for non-neutral/low-confidence posts
+- [x] **SENT-01**: Tier 1 RoBERTa classifier scores every post as positive/negative/neutral with confidence
+- [x] **SENT-02**: Tier 2 LLM extracts structured aspect-level sentiment for non-neutral/low-confidence posts
 - [x] **SENT-03**: LLM backend is configurable via env vars (Groq, DeepInfra, or GPT-4o-mini)
-- [ ] **SENT-04**: Aspect-level sentiment stored per tool mention (performance, cost, reliability, UX, speed, code quality, context window)
+- [x] **SENT-04**: Aspect-level sentiment stored per tool mention (performance, cost, reliability, UX, speed, code quality, context window)
 
 ### Frontend
 
@@ -81,10 +81,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COLL-04 | 6 | Complete |
 | COLL-05 | 6 | Complete |
 | COLL-06 | 6 | Complete |
-| SENT-01 | 11 | Pending |
-| SENT-02 | 11 | Pending |
+| SENT-01 | 11 | Complete |
+| SENT-02 | 11 | Complete |
 | SENT-03 | 8 | Complete |
-| SENT-04 | 11 | Pending |
+| SENT-04 | 11 | Complete |
 | FRON-01 | 11 | Pending |
 | FRON-02 | 11 | Pending |
 

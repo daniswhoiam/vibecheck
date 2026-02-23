@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 10-verification-documentation-cleanup (Plan 2 of 2)
-Plan: 10-02
+Phase: 11-entity-linking (Plan 1 of 3)
+Plan: 11-01
 Status: Complete
-Last activity: 2026-02-23 — Completed 10-02 (REQUIREMENTS.md traceability updated; ROADMAP.md plan checkboxes and progress table fixed)
+Last activity: 2026-02-23 — Completed 11-01 (MentionExtractor service + TDD test suite: 11 tests, word-boundary regex, ON CONFLICT DO NOTHING)
 
 ## Accumulated Context
 
@@ -125,6 +125,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - INFRA-03 uses [~] marker (not [x]) to distinguish resolved/superseded from completed requirements — preserves audit accuracy
 - Phase column in traceability table uses bare integers (5, 6, 7) not zero-padded (05, 06, 07) — consistent with verification grep patterns in plan
 
+**11-01 (2026-02-23):**
+- MentionExtractor._entity_map=None sentinel guards against uninitialized use — raises RuntimeError with clear message
+- Test suite patches pg_insert AND select in async tests to handle Python 3.14 local env where PostEntityMention is a MagicMock (db stubs)
+- extract_and_save_mentions() does a post-insert count query because rowcount is -1 with ON CONFLICT DO NOTHING in SQLAlchemy asyncpg driver
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -141,9 +146,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Executing phase 10-verification-documentation-cleanup)
-Stopped at: Completed 10-02-PLAN.md (REQUIREMENTS.md traceability updated; ROADMAP.md plan checkboxes and progress table fixed)
-Resume: Phase 10 Plan 02 complete — all Phase 10 plans complete; v2.0 documentation cleanup done
+Last session: 2026-02-23 (Executing phase 11-entity-linking)
+Stopped at: Completed 11-01-PLAN.md (MentionExtractor TDD — 11 tests all pass, mention_service.py created)
+Resume: Phase 11 Plan 01 complete — continue with 11-02 (backfill job) and 11-03 (pipeline integration)
 
 Config:
 {
