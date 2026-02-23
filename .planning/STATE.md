@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 09-frontend-evolution (Plan 6 of 6)
-Plan: 09-06
+Phase: 10-verification-documentation-cleanup (Plan 1 of 3)
+Plan: 10-01
 Status: Complete
-Last activity: 2026-02-23 — Completed 09-06 (Visual verification: 12/12 Playwright e2e tests pass, all 5 checks confirmed)
+Last activity: 2026-02-23 — Completed 10-01 (Phase 5 VERIFICATION.md created, INFRA-01/02 SATISFIED, INFRA-03 RESOLVED; SUMMARY frontmatter retrofitted)
 
 ## Accumulated Context
 
@@ -116,6 +116,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Trend chart simplified to aggregate-only line — source-filtered timeseries requires future backend change (per plan spec)
 - Pre-existing missing deps (SentimentBar, SearchDropdown, useLanguage) created as minimal stubs to unblock tests
 
+**10-01 (2026-02-23):**
+- INFRA-03 documented as RESOLVED (superseded) — Phase 5 CONTEXT.md locked decision "Leave Render entirely" before any Render tier upgrade was implemented; the requirement's underlying goal is satisfied by the replacement platform
+- INFRA-03 placed in 05-02-SUMMARY.md (AskNews removal plan) — both INFRA-02 and INFRA-03 are dependency/deployment cleanup work
+- 6 observable truths used for 3 requirements: 3 truths for INFRA-01, 2 for INFRA-02, 1 for INFRA-03 — provides maximum evidence density
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -132,9 +137,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
-Stopped at: Completed 09-06-PLAN.md (Visual verification: 12/12 Playwright e2e tests pass)
-Resume: Phase 09 complete — all 6 plans executed, FRON-01 and FRON-02 fulfilled, verified by Playwright
+Last session: 2026-02-23 (Executing phase 10-verification-documentation-cleanup)
+Stopped at: Completed 10-01-PLAN.md (Phase 5 VERIFICATION.md created; INFRA-01/02 SATISFIED, INFRA-03 RESOLVED)
+Resume: Phase 10 Plan 01 complete — proceed to Plan 02 (REQUIREMENTS.md traceability update)
 
 Config:
 {

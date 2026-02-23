@@ -9,9 +9,9 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: System migrates to new schema (posts, tool_mentions, aspect_sentiments) via Alembic without breaking existing data
-- [ ] **INFRA-02**: AskNews SDK removed and httpx upgraded to 0.28.1
-- [ ] **INFRA-03**: Render deployment upgraded to Standard tier ($25/mo) for ML model support
+- [x] **INFRA-01**: System migrates to new schema (posts, tool_mentions, aspect_sentiments) via Alembic without breaking existing data
+- [x] **INFRA-02**: AskNews SDK removed and httpx upgraded to 0.28.1
+- [x] **INFRA-03**: Render deployment upgraded to Standard tier ($25/mo) for ML model support
 
 ### Data Collection
 
@@ -72,9 +72,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | 10 | Pending |
-| INFRA-02 | 10 | Pending |
-| INFRA-03 | 10 | Pending |
+| INFRA-01 | 05 | Complete |
+| INFRA-02 | 05 | Complete |
+| INFRA-03 | 05 | Complete |
 | COLL-01 | — | Complete |
 | COLL-02 | — | Complete |
 | COLL-03 | — | Complete |
