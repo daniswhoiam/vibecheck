@@ -15,9 +15,9 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 ### Data Collection
 
-- [ ] **COLL-01**: System collects developer posts from Hacker News via Algolia API on a schedule
+- [x] **COLL-01**: System collects developer posts from Hacker News via Algolia API on a schedule
 - [ ] **COLL-02**: System collects developer posts from Reddit subreddits via asyncpraw on a schedule
-- [ ] **COLL-03**: System collects developer posts from Discourse forums (Cursor, OpenAI) on a schedule
+- [x] **COLL-03**: System collects developer posts from Discourse forums (Cursor, OpenAI) on a schedule
 - [ ] **COLL-04**: System collects developer articles from Dev.to via Forem API v1 on a schedule
 - [x] **COLL-05**: Keyword relevance filter rejects irrelevant posts before storage using tool names and context terms
 - [x] **COLL-06**: Content deduplication prevents duplicate posts across all sources via hash-based detection
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-01 | — | Pending |
 | INFRA-02 | — | Pending |
 | INFRA-03 | — | Pending |
-| COLL-01 | — | Pending |
+| COLL-01 | — | Complete |
 | COLL-02 | — | Pending |
-| COLL-03 | — | Pending |
+| COLL-03 | — | Complete |
 | COLL-04 | — | Pending |
 | COLL-05 | — | Complete |
 | COLL-06 | — | Complete |

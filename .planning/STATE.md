@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 06-data-collection (Plan 2 of 4)
-Plan: 06-02
+Phase: 06-data-collection (Plan 3 of 4)
+Plan: 06-03
 Status: In progress
-Last activity: 2026-02-23 — Completed 06-01 (data pipeline foundation)
+Last activity: 2026-02-23 — Completed 06-02 (HN + Discourse collectors)
 
 ## Accumulated Context
 
@@ -25,6 +25,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Filter API is module-level is_relevant() function, not a FilterService class — simpler for collectors
 - MAX_BODY_CHARS=50_000 (50K chars) covers ~99th percentile of Dev.to articles
 - Hash input: url > body > empty string — URL is canonical dedup key across mirrors/reposts
+- [Phase 06-02]: HN top-level comment filter: parent_id == story_id check is direct and unambiguous
+- [Phase 06-02]: Discourse two-pass filter (title then body) conserves API calls on rate-sensitive forums
+- [Phase 06-02]: HN 1000-hit cap logs WARNING (not error) — callers use weekly time windows for backfill
 
 ### Known Tech Debt
 
@@ -43,8 +46,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 06-data-collection)
-Stopped at: Completed 06-01-PLAN.md
-Resume: Execute 06-02-PLAN.md (next source collector plan)
+Stopped at: Completed 06-02-PLAN.md
+Resume: Execute 06-03-PLAN.md (Reddit + Dev.to collectors)
 
 Config:
 {
