@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 07-tier-1-sentiment-aggregation (Plan 4 of 5)
-Plan: 07-04
+Phase: 07-tier-1-sentiment-aggregation (Plan 5 of 5)
+Plan: 07-05
 Status: Complete
-Last activity: 2026-02-23 — Completed 07-04 (API rewrite: sentiment route queries SentimentRollup, entities.py cleaned)
+Last activity: 2026-02-23 — Completed 07-05 (Scheduler pipeline chain: collect→score→aggregate per source)
 
 ## Accumulated Context
 
@@ -63,6 +63,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - SentimentTimeseriesResponse class name kept (describes API response shape, not DB model)
 - source_breakdown typed Optional[Dict[str, Any]] matching SentimentRollup.source_breakdown JSON column
 
+**07-05 (2026-02-23):**
+- Score/aggregate run as pipeline steps inside each collect job, not as separate scheduler jobs — avoids race conditions and keeps one log entry per source
+- Collection failure does not prevent scoring/aggregation from running — errors list accumulates, but all three steps always attempt
+- wrapped_job_execution() preserved (not deleted) for potential future non-collection job types
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -80,8 +85,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
-Stopped at: Completed 07-04-PLAN.md (API rewrite: SentimentRollup queries + SentimentTimeseries removal)
-Resume: Phase 07 Plans 01, 02, 03, and 04 complete — ready for Plan 05
+Stopped at: Completed 07-05-PLAN.md (Scheduler pipeline chain: collect→score→aggregate per source)
+Resume: Phase 07 all 5 plans complete — phase fully done
 
 Config:
 {

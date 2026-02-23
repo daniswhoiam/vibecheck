@@ -25,7 +25,7 @@
 
 - [x] **Phase 5: Infrastructure** — Schema migration, dependency cleanup, and Render upgrade
 - [ ] **Phase 6: Data Collection** — All five free source collectors wired in with filtering and deduplication
-- [ ] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended
+- [x] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended (completed 2026-02-23)
 - [ ] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts
 - [ ] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI
 
@@ -111,7 +111,7 @@ Plans:
 | 3.1. Entity Seeding Automation | v1.0 | 1/1 | Complete | 2026-02-05 |
 | 5. Infrastructure | v2.0 | 2/2 | Complete | 2026-02-19 |
 | 6. Data Collection | 3/4 | In Progress|  | - |
-| 7. Tier 1 Sentiment + Aggregation | 4/5 | In Progress|  | - |
+| 7. Tier 1 Sentiment + Aggregation | 5/5 | Complete   | 2026-02-23 | - |
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 0/? | Not started | - |
 | 9. Frontend Evolution | v2.0 | 0/? | Not started | - |
 
