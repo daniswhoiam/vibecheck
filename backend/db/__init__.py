@@ -4,7 +4,7 @@ Exports database session factory, engine, and models.
 """
 from db.base import Base
 from db.session import engine, AsyncSessionLocal, get_session
-from db.models import Entity, Article, SentimentTimeseries
+from db.models import Entity, Post, PostEntityMention, AspectSentiment, SentimentRollup, SchedulerExecutionLog
 
 __all__ = [
     "Base",
@@ -12,6 +12,9 @@ __all__ = [
     "AsyncSessionLocal",
     "get_session",
     "Entity",
-    "Article",
-    "SentimentTimeseries",
+    "Post",
+    "PostEntityMention",
+    "AspectSentiment",
+    "SentimentRollup",
+    "SchedulerExecutionLog",
 ]
