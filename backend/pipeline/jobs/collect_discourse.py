@@ -18,6 +18,7 @@ from pipeline.clients.discourse_client import (
 from pipeline.models import PostCreate
 from pipeline.services.filter_service import is_relevant
 from pipeline.services.storage_service import save_post
+from pipeline.services.mention_service import MentionExtractor, extract_and_save_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,12 @@ async def run_collect_discourse(session: AsyncSession) -> dict:
         "filtered_body": 0,
         "duplicates": 0,
         "errors": 0,
+        "mentions_extracted": 0,
     }
+
+    # Initialize mention extractor once per job run (not per post)
+    extractor = MentionExtractor()
+    await extractor.load_entities(session)
 
     async with httpx.AsyncClient() as client:
         for forum_url in DISCOURSE_FORUMS:
@@ -90,6 +96,18 @@ async def run_collect_discourse(session: AsyncSession) -> dict:
                     saved = await save_post(post, session)
                     if saved:
                         stats["collected"] += 1
+                        # Extract entity mentions for newly collected topic
+                        try:
+                            post_text = f"{normalized['title'] or ''} {normalized['body'] or ''}"
+                            mention_count = await extract_and_save_mentions(
+                                session, saved.id, post_text, extractor
+                            )
+                            stats["mentions_extracted"] += mention_count
+                        except Exception as exc:
+                            logger.warning(
+                                "Failed to extract mentions for post %s: %s",
+                                normalized.get("external_id", "?"), exc,
+                            )
                     else:
                         stats["duplicates"] += 1
                 except Exception as exc:

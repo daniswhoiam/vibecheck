@@ -23,6 +23,7 @@ from pipeline.clients.devto_client import (
 from pipeline.models import PostCreate
 from pipeline.services.filter_service import is_relevant
 from pipeline.services.storage_service import save_post
+from pipeline.services.mention_service import MentionExtractor, extract_and_save_mentions
 
 logger = logging.getLogger(__name__)
 
@@ -38,11 +39,16 @@ async def run_collect_devto(session: AsyncSession) -> dict:
         "filtered_body": 0,
         "duplicates": 0,
         "errors": 0,
+        "mentions_extracted": 0,
     }
 
     api_key = os.environ.get("DEVTO_API_KEY")
     seen_ids: set[int] = set()  # Dedup across tags (same article may appear in multiple tags)
     semaphore = asyncio.Semaphore(BODY_FETCH_CONCURRENCY)
+
+    # Initialize mention extractor once per job run (not per post)
+    extractor = MentionExtractor()
+    await extractor.load_entities(session)
 
     async def _fetch_body_limited(article_id: int, client: httpx.AsyncClient) -> str | None:
         async with semaphore:
@@ -101,6 +107,17 @@ async def run_collect_devto(session: AsyncSession) -> dict:
                     saved = await save_post(post, session)
                     if saved:
                         stats["collected"] += 1
+                        # Extract entity mentions for newly collected article
+                        try:
+                            mention_count = await extract_and_save_mentions(
+                                session, saved.id, full_text, extractor
+                            )
+                            stats["mentions_extracted"] += mention_count
+                        except Exception as exc:
+                            logger.warning(
+                                "Failed to extract mentions for post %s: %s",
+                                normalized.get("external_id", "?"), exc,
+                            )
                     else:
                         stats["duplicates"] += 1
                 except Exception as exc:
