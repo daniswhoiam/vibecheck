@@ -111,7 +111,7 @@ Plans:
 | 3.1. Entity Seeding Automation | v1.0 | 1/1 | Complete | 2026-02-05 |
 | 5. Infrastructure | v2.0 | 2/2 | Complete | 2026-02-19 |
 | 6. Data Collection | 3/4 | In Progress|  | - |
-| 7. Tier 1 Sentiment + Aggregation | v2.0 | 0/? | Not started | - |
+| 7. Tier 1 Sentiment + Aggregation | 2/5 | In Progress|  | - |
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 0/? | Not started | - |
 | 9. Frontend Evolution | v2.0 | 0/? | Not started | - |
 

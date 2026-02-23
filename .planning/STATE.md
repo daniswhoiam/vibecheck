@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 06-data-collection (Plan 4 of 4)
-Plan: 06-04
+Phase: 07-tier-1-sentiment-aggregation (Plan 2 of 4)
+Plan: 07-02
 Status: Complete
-Last activity: 2026-02-23 — Completed 06-04 (scheduler integration — all 4 jobs wired)
+Last activity: 2026-02-23 — Completed 07-02 (ML deps + SentimentClassifier with GliClass zero-shot classification)
 
 ## Accumulated Context
 
@@ -38,6 +38,14 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 06-04]: Job factory closure _make_scheduled_job creates fresh coroutine per trigger; each run gets its own AsyncSession
 - [Phase 06-04]: Stagger: HN +0m, Reddit +30m, Discourse +60m, Dev.to +90m to smooth resource usage across 6h cycle
 
+**07-02 (2026-02-23):**
+- device=-1 (CPU) set explicitly in HuggingFace pipeline — Render Standard tier has no GPU, avoids CUDA warnings
+- On-demand model load/unload per classify() call — 3s load time tradeoff for minimal baseline memory between 6h cycles
+- asyncio.to_thread() wraps both model load and inference — HuggingFace pipeline() is fully synchronous
+- Labels Positive/Negative/Neutral (capitalized) matching CONTEXT.md user decision
+- MAX_CHARS=2000 truncation — ~512 tokens for typical English developer text
+- DEFAULT_BATCH_SIZE=8 conservative start for 1.5GB memory budget
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -54,9 +62,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Executing phase 06-data-collection)
-Stopped at: Completed 06-04-PLAN.md
-Resume: Phase 06 complete — ready for Phase 07 (sentiment pipeline)
+Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
+Stopped at: Completed 07-02-PLAN.md
+Resume: Phase 07 Plan 02 complete — ready for Plan 03 (score_sentiment job)
 
 Config:
 {
