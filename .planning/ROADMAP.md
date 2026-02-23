@@ -106,7 +106,15 @@ Plans:
   1. User can select a source filter (HN, Reddit, Discourse, Dev.to) on the entity detail page and the sentiment chart updates to reflect only that source
   2. User can view an aspect sentiment chart for an entity showing scores across the seven defined aspects
   3. Existing entity list and sentiment trend views still load and display correct data with no visible regressions
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — TDD Wave 0: failing test scaffolds for source filter, aspect chart, hook, and detail page integration
+- [ ] 09-02-PLAN.md — Foundation layer: AspectSentimentData types, fetchAspectSentiment API, useAspectSentiment hook, shadcn UI components
+- [ ] 09-03-PLAN.md — SourceFilterToggle component: pill-style segmented toggle with 5 source options
+- [ ] 09-04-PLAN.md — AspectSentimentChart component: horizontal diverging bar chart for 7 aspects
+- [ ] 09-05-PLAN.md — Detail.tsx integration: wire source filter + aspect section, URL persistence, full test suite GREEN
+- [ ] 09-06-PLAN.md — Visual checkpoint: user verification of complete Phase 9 UI experience
 
 ## Progress
 
