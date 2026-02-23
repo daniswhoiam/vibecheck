@@ -28,7 +28,7 @@
 - [x] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended (completed 2026-02-23)
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
 - [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
-- [ ] **Phase 10: Verification & Documentation Cleanup** — Close orphaned INFRA requirements, fix stale docs
+- [x] **Phase 10: Verification & Documentation Cleanup** — Close orphaned INFRA requirements, fix stale docs (completed 2026-02-23)
 
 ## Phase Details
 
@@ -146,7 +146,7 @@ Plans:
 | 7. Tier 1 Sentiment + Aggregation | v2.0 | 5/5 | Complete | 2026-02-23 |
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 5/5 | Complete | 2026-02-23 |
 | 9. Frontend Evolution | v2.0 | 6/6 | Complete | 2026-02-23 |
-| 10. Verification & Documentation Cleanup | v2.0 | 0/2 | In Progress | - |
+| 10. Verification & Documentation Cleanup | v2.0 | 2/2 | Complete | 2026-02-23 |
 
 ---
 *Roadmap created: 2026-02-05*
