@@ -27,7 +27,7 @@
 - [ ] **Phase 6: Data Collection** — All five free source collectors wired in with filtering and deduplication
 - [x] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended (completed 2026-02-23)
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
-- [ ] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI
+- [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
 
 ## Phase Details
 
@@ -128,7 +128,7 @@ Plans:
 | 6. Data Collection | 3/4 | In Progress|  | - |
 | 7. Tier 1 Sentiment + Aggregation | 5/5 | Complete    | 2026-02-23 | - |
 | 8. Tier 2 LLM + Aspect Extraction | 5/5 | Complete   | 2026-02-23 | - |
-| 9. Frontend Evolution | 5/6 | In Progress|  | - |
+| 9. Frontend Evolution | 5/6 | Complete    | 2026-02-23 | - |
 
 ---
 *Roadmap created: 2026-02-05*
