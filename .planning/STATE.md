@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 11-entity-linking (Plan 2 of 3)
-Plan: 11-02
+Phase: 11-entity-linking (Plan 3 of 3)
+Plan: 11-03
 Status: Complete
-Last activity: 2026-02-23 — Completed 11-02 (backfill job extract_entity_mentions.py + scheduler registration as one-time DateTrigger startup job)
+Last activity: 2026-02-23 — Completed 11-03 (pipeline mention extraction integration — all 4 collectors wired, storage_service.py return type fixed to Post|None)
 
 ## Accumulated Context
 
@@ -136,6 +136,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Backfill excluded from get_job_health() job_configs — one-time jobs have no "overdue" semantics
 - wrapped_job_execution() (not wrapped_pipeline_execution()) for backfill — standalone, not chained with score/aggregate
 
+**11-03 (2026-02-23):**
+- save_post() return type changed from bool to Post|None — preserves backward-compatible truthiness, enables saved.id for mention extraction
+- MentionExtractor initialized once per job run (not per post) — entity list loaded from DB once, cached in memory for duration of job
+- Mention extraction errors caught as warnings only — collection never aborted by extraction failure
+- HN collector: extraction applied to both stories and comments independently (both call save_post separately)
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -153,8 +159,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 11-entity-linking)
-Stopped at: Completed 11-02-PLAN.md (backfill job + scheduler one-time DateTrigger registration)
-Resume: Phase 11 Plan 02 complete — continue with 11-03 (pipeline integration: call extract_and_save_mentions after save_post in each collection job)
+Stopped at: Completed 11-03-PLAN.md (pipeline mention extraction integration — all 4 collectors wired, storage_service.py return type fixed to Post|None)
+Resume: Phase 11 all 3 plans complete — entity linking gap closure finished
 
 Config:
 {
