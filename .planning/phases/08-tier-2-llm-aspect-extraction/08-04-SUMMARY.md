@@ -158,6 +158,15 @@ None - no new external service configuration required. `GROQ_API_KEY` and `LLM_M
 - Conftest improvements are permanent: future test files in this directory benefit automatically
 - No blockers for 08-05
 
+## Self-Check: PASSED
+
+- `backend/pipeline/jobs/extract_aspects.py` — FOUND
+- `backend/tests/conftest.py` — FOUND
+- `.planning/phases/08-tier-2-llm-aspect-extraction/08-04-SUMMARY.md` — FOUND
+- Commit `f7728de` — FOUND
+- Commit `c388da6` — FOUND
+- All 30 tests pass (`python -m pytest tests/ --override-ini="addopts=" 2>&1 | tail -1` → `30 passed, 2 warnings`)
+
 ---
 *Phase: 08-tier-2-llm-aspect-extraction*
 *Completed: 2026-02-23*
