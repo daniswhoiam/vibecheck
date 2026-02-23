@@ -127,7 +127,11 @@ Plans:
   2. INFRA-03 is resolved (verified or documented as manual deployment config)
   3. REQUIREMENTS.md traceability table has correct Phase assignments and status for all 15 requirements
   4. ROADMAP.md plan checkboxes and progress rows accurately reflect completion state
-**Plans**: TBD (use `/gsd:plan-phase 10`)
+**Plans**: 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Create Phase 5 VERIFICATION.md and retrofit SUMMARY frontmatter (INFRA-01, INFRA-02, INFRA-03)
+- [ ] 10-02-PLAN.md — Update REQUIREMENTS.md traceability and ROADMAP.md progress/checkboxes
 
 ## Progress
 
