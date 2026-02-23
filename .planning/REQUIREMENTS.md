@@ -31,8 +31,8 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 ### Frontend
 
-- [ ] **FRON-01**: User can see sentiment breakdown by data source (HN, Reddit, Discourse, Dev.to)
-- [ ] **FRON-02**: User can see aspect-level sentiment charts per entity
+- [x] **FRON-01**: User can see sentiment breakdown by data source (HN, Reddit, Discourse, Dev.to)
+- [x] **FRON-02**: User can see aspect-level sentiment charts per entity
 
 ## Future Requirements
 
@@ -85,8 +85,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SENT-02 | 11 | Complete |
 | SENT-03 | 8 | Complete |
 | SENT-04 | 11 | Complete |
-| FRON-01 | 11 | Pending |
-| FRON-02 | 11 | Pending |
+| FRON-01 | 11 | Complete |
+| FRON-02 | 11 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 15 total

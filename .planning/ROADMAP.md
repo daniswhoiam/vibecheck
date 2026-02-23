@@ -166,7 +166,7 @@ Plans:
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 5/5 | Complete | 2026-02-23 |
 | 9. Frontend Evolution | v2.0 | 6/6 | Complete | 2026-02-23 |
 | 10. Verification & Documentation Cleanup | v2.0 | Complete    | 2026-02-23 | 2026-02-23 |
-| 11. Entity Linking | 1/4 | In Progress|  | — |
+| 11. Entity Linking | 2/4 | In Progress|  | — |
 
 ---
 *Roadmap created: 2026-02-05*

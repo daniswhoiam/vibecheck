@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 11-entity-linking (Plan 1 of 3)
-Plan: 11-01
+Phase: 11-entity-linking (Plan 2 of 3)
+Plan: 11-02
 Status: Complete
-Last activity: 2026-02-23 — Completed 11-01 (MentionExtractor service + TDD test suite: 11 tests, word-boundary regex, ON CONFLICT DO NOTHING)
+Last activity: 2026-02-23 — Completed 11-02 (backfill job extract_entity_mentions.py + scheduler registration as one-time DateTrigger startup job)
 
 ## Accumulated Context
 
@@ -130,6 +130,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Test suite patches pg_insert AND select in async tests to handle Python 3.14 local env where PostEntityMention is a MagicMock (db stubs)
 - extract_and_save_mentions() does a post-insert count query because rowcount is -1 with ON CONFLICT DO NOTHING in SQLAlchemy asyncpg driver
 
+**11-02 (2026-02-23):**
+- NOT EXISTS subquery for backfill pagination — posts with no entity matches are not inserted into PostEntityMention so they won't re-appear; offset pagination safe for single backfill run
+- trigger="date" with run_date=now+5min — APScheduler DateTrigger fires exactly once, ideal for startup one-time backfill
+- Backfill excluded from get_job_health() job_configs — one-time jobs have no "overdue" semantics
+- wrapped_job_execution() (not wrapped_pipeline_execution()) for backfill — standalone, not chained with score/aggregate
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -147,8 +153,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 11-entity-linking)
-Stopped at: Completed 11-01-PLAN.md (MentionExtractor TDD — 11 tests all pass, mention_service.py created)
-Resume: Phase 11 Plan 01 complete — continue with 11-02 (backfill job) and 11-03 (pipeline integration)
+Stopped at: Completed 11-02-PLAN.md (backfill job + scheduler one-time DateTrigger registration)
+Resume: Phase 11 Plan 02 complete — continue with 11-03 (pipeline integration: call extract_and_save_mentions after save_post in each collection job)
 
 Config:
 {
