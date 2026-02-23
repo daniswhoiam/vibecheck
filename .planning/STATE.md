@@ -9,16 +9,22 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-19 — Milestone v2.0 started
+Phase: 06-data-collection (Plan 2 of 4)
+Plan: 06-02
+Status: In progress
+Last activity: 2026-02-23 — Completed 06-01 (data pipeline foundation)
 
 ## Accumulated Context
 
 ### Decisions
 
 All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
+
+**06-01 (2026-02-23):**
+- Context words for ambiguous names use word-boundary regex (not substring) — prevents "ai" matching inside "painted", "trained", etc.
+- Filter API is module-level is_relevant() function, not a FilterService class — simpler for collectors
+- MAX_BODY_CHARS=50_000 (50K chars) covers ~99th percentile of Dev.to articles
+- Hash input: url > body > empty string — URL is canonical dedup key across mirrors/reposts
 
 ### Known Tech Debt
 
@@ -36,9 +42,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-19 (Milestone v2.0 started)
-Stopped at: Defining requirements for v2.0
-Resume: Continue requirements definition and roadmap creation
+Last session: 2026-02-23 (Executing phase 06-data-collection)
+Stopped at: Completed 06-01-PLAN.md
+Resume: Execute 06-02-PLAN.md (next source collector plan)
 
 Config:
 {

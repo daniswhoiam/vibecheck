@@ -19,8 +19,8 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 - [ ] **COLL-02**: System collects developer posts from Reddit subreddits via asyncpraw on a schedule
 - [ ] **COLL-03**: System collects developer posts from Discourse forums (Cursor, OpenAI) on a schedule
 - [ ] **COLL-04**: System collects developer articles from Dev.to via Forem API v1 on a schedule
-- [ ] **COLL-05**: Keyword relevance filter rejects irrelevant posts before storage using tool names and context terms
-- [ ] **COLL-06**: Content deduplication prevents duplicate posts across all sources via hash-based detection
+- [x] **COLL-05**: Keyword relevance filter rejects irrelevant posts before storage using tool names and context terms
+- [x] **COLL-06**: Content deduplication prevents duplicate posts across all sources via hash-based detection
 
 ### Sentiment Analysis
 
@@ -79,8 +79,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COLL-02 | — | Pending |
 | COLL-03 | — | Pending |
 | COLL-04 | — | Pending |
-| COLL-05 | — | Pending |
-| COLL-06 | — | Pending |
+| COLL-05 | — | Complete |
+| COLL-06 | — | Complete |
 | SENT-01 | — | Pending |
 | SENT-02 | — | Pending |
 | SENT-03 | — | Pending |
