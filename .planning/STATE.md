@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 06-data-collection (Plan 3 of 4)
-Plan: 06-03
+Phase: 06-data-collection (Plan 4 of 4)
+Plan: 06-04
 Status: In progress
-Last activity: 2026-02-23 — Completed 06-02 (HN + Discourse collectors)
+Last activity: 2026-02-23 — Completed 06-03 (Reddit + Dev.to collectors)
 
 ## Accumulated Context
 
@@ -28,6 +28,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 06-02]: HN top-level comment filter: parent_id == story_id check is direct and unambiguous
 - [Phase 06-02]: Discourse two-pass filter (title then body) conserves API calls on rate-sensitive forums
 - [Phase 06-02]: HN 1000-hit cap logs WARNING (not error) — callers use weekly time windows for backfill
+
+**06-03 (2026-02-23):**
+- asyncpraw context manager (async with ... as reddit) mandatory — prevents aiohttp connector leak on session close
+- Tool-specific and broad subreddits both call is_relevant() identically — distinction is structural, not logic-level
+- Dev.to seen_ids dedup before body fetch — saves API calls for articles appearing under multiple tags
+- BODY_FETCH_CONCURRENCY=5 caps concurrent /api/articles/{id} requests to avoid 429 without API key
 
 ### Known Tech Debt
 
@@ -46,8 +52,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 06-data-collection)
-Stopped at: Completed 06-02-PLAN.md
-Resume: Execute 06-03-PLAN.md (Reddit + Dev.to collectors)
+Stopped at: Completed 06-03-PLAN.md
+Resume: Execute 06-04-PLAN.md (scheduler integration)
 
 Config:
 {
