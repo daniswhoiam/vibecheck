@@ -2,6 +2,8 @@
 
 Manages scheduled job execution with health monitoring and audit logging.
 All four Phase 6 data collection jobs are registered in setup_jobs().
+Each collection job chains into score_sentiment and aggregate_sentiment —
+one log entry per source per pipeline cycle.
 """
 import logging
 import uuid
@@ -18,6 +20,8 @@ from pipeline.jobs.collect_hackernews import run_collect_hackernews
 from pipeline.jobs.collect_reddit import run_collect_reddit
 from pipeline.jobs.collect_discourse import run_collect_discourse
 from pipeline.jobs.collect_devto import run_collect_devto
+from pipeline.jobs.score_sentiment import run_score_sentiment
+from pipeline.jobs.aggregate_sentiment import run_aggregate_sentiment
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +112,102 @@ async def wrapped_job_execution(
         )
 
 
+async def wrapped_pipeline_execution(
+    job_name: str,
+    collect_func: Callable[[AsyncSession], dict[str, Any]],
+    db_session: AsyncSession
+) -> None:
+    """Execute collect → score → aggregate pipeline with audit logging.
+
+    Chains three steps in sequence:
+    1. Collect: fetch new posts from the source
+    2. Score: classify any unscored posts with GliClass
+    3. Aggregate: recompute today's sentiment rollup for all entities
+
+    Each step is logged separately. Collect failures are logged but do not
+    prevent scoring/aggregation — previously unscored posts from earlier
+    runs should still be processed.
+
+    Args:
+        job_name: Source identifier (e.g., 'collect_hackernews')
+        collect_func: The source-specific collection job function
+        db_session: Shared database session for all three pipeline steps
+    """
+    execution_id = str(uuid.uuid4())
+    started_at = datetime.now(timezone.utc)
+    pipeline_stats: dict[str, Any] = {}
+
+    logger.info("Pipeline execution started: %s (id=%s)", job_name, execution_id)
+
+    # Create execution log entry
+    log_entry = SchedulerExecutionLog(
+        execution_id=execution_id,
+        job_name=job_name,
+        status="running",
+        started_at=started_at,
+        completed_at=None,
+        duration_seconds=None,
+        error_message=None,
+        metadata_json=None,
+    )
+    db_session.add(log_entry)
+    await db_session.commit()
+
+    errors = []
+
+    # Step 1: Collect
+    try:
+        collect_stats = await collect_func(db_session)
+        pipeline_stats["collection"] = collect_stats
+        logger.info("%s: collected %s posts", job_name, collect_stats.get("collected", "?"))
+    except Exception as exc:
+        logger.error("%s: collection failed: %s", job_name, exc, exc_info=True)
+        pipeline_stats["collection"] = {"error": str(exc)}
+        errors.append(f"collection: {exc}")
+
+    # Step 2: Score (always attempt, even if collection failed)
+    try:
+        score_stats = await run_score_sentiment(db_session)
+        pipeline_stats["sentiment"] = score_stats
+        logger.info("%s: scored %s posts", job_name, score_stats.get("scored", "?"))
+    except Exception as exc:
+        logger.error("%s: scoring failed: %s", job_name, exc, exc_info=True)
+        pipeline_stats["sentiment"] = {"error": str(exc)}
+        errors.append(f"scoring: {exc}")
+
+    # Step 3: Aggregate (always attempt, even if scoring failed)
+    try:
+        agg_stats = await run_aggregate_sentiment(db_session)
+        pipeline_stats["aggregation"] = agg_stats
+        logger.info("%s: updated %s rollups", job_name, agg_stats.get("rollups_updated", "?"))
+    except Exception as exc:
+        logger.error("%s: aggregation failed: %s", job_name, exc, exc_info=True)
+        pipeline_stats["aggregation"] = {"error": str(exc)}
+        errors.append(f"aggregation: {exc}")
+
+    # Finalize log entry
+    completed_at = datetime.now(timezone.utc)
+    duration = (completed_at - started_at).total_seconds()
+
+    log_entry.status = "failed" if errors else "success"
+    log_entry.completed_at = completed_at
+    log_entry.duration_seconds = duration
+    log_entry.metadata_json = pipeline_stats
+    if errors:
+        log_entry.error_message = "; ".join(errors)
+
+    await db_session.commit()
+
+    # Update health tracking (track on success only)
+    if not errors:
+        job_last_run[job_name] = completed_at
+
+    logger.info(
+        "Pipeline execution complete: %s (id=%s, duration=%.2fs, status=%s)",
+        job_name, execution_id, duration, log_entry.status,
+    )
+
+
 def setup_jobs() -> None:
     """Register all data collection jobs with APScheduler.
 
@@ -131,10 +231,10 @@ def setup_jobs() -> None:
     now = datetime.now(timezone.utc)
 
     def _make_scheduled_job(job_name: str, job_func):
-        """Create the APScheduler-compatible wrapper that manages its own session."""
+        """Create APScheduler-compatible wrapper for collect→score→aggregate pipeline."""
         async def _job():
             async with AsyncSessionLocal() as db_session:
-                await wrapped_job_execution(job_name, job_func, db_session)
+                await wrapped_pipeline_execution(job_name, job_func, db_session)
         return _job
 
     job_definitions = [
