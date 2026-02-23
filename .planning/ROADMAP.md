@@ -144,7 +144,13 @@ Plans:
   2. aggregate_sentiment produces non-empty SentimentRollup rows with source_breakdown data
   3. extract_aspects processes posts through the LLM and creates AspectSentiment rows
   4. Frontend source filter and aspect chart display real data (not empty state)
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 11-01-PLAN.md — TDD: MentionExtractor service with word-boundary regex and test suite
+- [ ] 11-02-PLAN.md — Backfill job + scheduler startup registration (Wave 2)
+- [ ] 11-03-PLAN.md — Collector wiring: mention extraction after save_post in all 4 collectors (Wave 2)
+- [ ] 11-04-PLAN.md — End-to-end verification: backfill run + frontend data checkpoint (Wave 3)
 
 ## Progress
 
