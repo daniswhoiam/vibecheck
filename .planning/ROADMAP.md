@@ -64,15 +64,22 @@ Plans:
 - [ ] 06-04-PLAN.md — Scheduler wiring: setup_jobs() with 4 staggered jobs + end-to-end verification
 
 ### Phase 7: Tier 1 Sentiment + Aggregation
-**Goal**: Every collected post has a RoBERTa sentiment score, sentiment_timeseries rollups include per-source breakdown, and the API exposes source breakdown data to consumers
+**Goal**: Every collected post has a GliClass sentiment score, sentiment_rollup rows include per-source JSONB breakdown, and the API exposes source breakdown data via the existing /entities/{id}/sentiment endpoint
 **Depends on**: Phase 6
 **Requirements**: SENT-01
 **Success Criteria** (what must be TRUE):
-  1. All posts in the database have a non-null roberta_score after the sentiment job runs
-  2. The sentiment_timeseries table contains a source_breakdown JSONB column populated with per-source sentiment values
-  3. The entity sentiment history endpoint returns a source_breakdown field alongside existing fields
-  4. Render memory usage stays below 1.5GB under sustained sentiment job load (no OOM restarts)
-**Plans**: TBD
+  1. All posts in the database have a non-null sentiment_label after the scoring job runs
+  2. The sentiment_rollup table contains source_breakdown JSONB populated with per-source sentiment values
+  3. The entity sentiment history endpoint returns source_breakdown nested in each data point
+  4. Memory usage stays below 1.5GB under sustained sentiment job load (GliClass on-demand loading)
+**Plans**: 5 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Schema foundation: Post sentiment columns + SentimentRollup ORM + Alembic migrations 007+008 + fix db/__init__.py
+- [ ] 07-02-PLAN.md — ML dependencies + SentimentClassifier service (GliClass zero-shot, on-demand load)
+- [ ] 07-03-PLAN.md — Scoring job (score_sentiment) + Aggregation job (aggregate_sentiment with JSONB rollup)
+- [ ] 07-04-PLAN.md — API rewrite: sentiment endpoint queries SentimentRollup, remove v1.0 SentimentTimeseries refs
+- [ ] 07-05-PLAN.md — Scheduler chaining: collect→score→aggregate pipeline per source
 
 ### Phase 8: Tier 2 LLM + Aspect Extraction
 **Goal**: Posts with ambiguous or non-neutral Tier 1 scores are processed by the configured LLM and aspect-level sentiment is stored per tool mention
