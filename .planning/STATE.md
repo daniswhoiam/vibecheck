@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 08-tier-2-llm-aspect-extraction (Plan 2 of 5)
-Plan: 08-02
+Phase: 08-tier-2-llm-aspect-extraction (Plan 3 of 5)
+Plan: 08-03
 Status: Complete
-Last activity: 2026-02-23 — Completed 08-02 (LLM provider abstraction: GroqProvider, OpenAIProvider, Pydantic validation, 11 tests GREEN)
+Last activity: 2026-02-23 — Completed 08-03 (aspect API endpoint: GET /entities/{id}/aspects, schemas, 10/10 tests GREEN)
 
 ## Accumulated Context
 
@@ -76,6 +76,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 08-02]: AspectScoresSchema fields required (no defaults) to catch incomplete LLM output
 - [Phase 08-02]: Module-level Groq/AsyncOpenAI imports (try/except ImportError) for test patchability
 - [Phase 08-02]: extra='ignore' on AspectScoresSchema silently drops unknown aspects from LLM output
+- [Phase 08]: FastAPI Literal type for query params (window, source) gives automatic 422 validation — correct for schema errors vs 400 for business logic errors
+- [Phase 08]: INTERVAL f-string substitution (not bind param) for PostgreSQL time window queries — safe because days value is whitelist-validated
+- [Phase 08]: FastAPI dependency_overrides (not patch()) is the correct mechanism for mocking Depends() in tests — patch() only affects module namespace, not FastAPI's captured function reference
 
 ### Known Tech Debt
 
@@ -94,8 +97,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
-Stopped at: Completed 08-02-PLAN.md (LLM provider abstraction: GroqProvider, OpenAIProvider, Pydantic validation, 11 tests GREEN)
-Resume: Phase 08 plan 2 of 5 complete — continue with 08-03 (aspect extraction job)
+Stopped at: Completed 08-03-PLAN.md (aspect API endpoint: GET /entities/{id}/aspects, schemas, 10/10 tests GREEN)
+Resume: Phase 08 plan 3 of 5 complete — continue with 08-04 (extract_aspects.py job: routing logic, storage)
 
 Config:
 {
