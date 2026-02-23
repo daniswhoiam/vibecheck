@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 09-frontend-evolution (Plan 3 of 5)
-Plan: 09-03
+Phase: 09-frontend-evolution (Plan 4 of 5)
+Plan: 09-04
 Status: Complete
-Last activity: 2026-02-23 — Completed 09-03 (SourceFilterToggle: pill-style segmented toggle button group for source filtering with Radix ToggleGroup, 3/3 unit tests GREEN)
+Last activity: 2026-02-23 — Completed 09-04 (AspectSentimentChart: horizontal diverging bar chart for 7 sentiment aspects using Recharts, sort by score, empty state, insufficient-data inline labels, all 4 tests GREEN)
 
 ## Accumulated Context
 
@@ -105,6 +105,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 **09-03 (2026-02-23):**
 - Radix ToggleGroup type=single sends empty string on active item click — guard with if (!newValue) return prevents deselecting all sources
 
+**09-04 (2026-02-23):**
+- Visually-hidden fallback spans (sr-only CSS) used for aspect labels and insufficient-data markers — Recharts custom YAxis ticks don't render in jsdom
+- ResizeObserver polyfill added to src/test/setup.ts — Recharts ResponsiveContainer requires it to avoid ReferenceError in jsdom
+- Empty state source label: source && source !== 'all' ? capitalize(source) : 'this source' — covers both filter and no-filter cases
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -122,8 +127,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
-Stopped at: Completed 09-03-PLAN.md (SourceFilterToggle: pill-style segmented toggle button group, 3/3 unit tests GREEN)
-Resume: Phase 09, Plan 4 of 5 — integrate SourceFilterToggle and useAspectSentiment into Detail page
+Stopped at: Completed 09-04-PLAN.md (AspectSentimentChart: horizontal diverging bar chart, 4/4 unit tests GREEN)
+Resume: Phase 09, Plan 5 of 5 — Detail page integration (SourceFilterToggle + AspectSentimentChart)
 
 Config:
 {
