@@ -102,27 +102,34 @@ class TestExtractAndSaveMentions:
     @pytest.mark.asyncio
     async def test_inserts_mention_rows_and_returns_count(self, extractor):
         """When entities are found, rows are inserted and count is returned."""
-        # Set up extractor to find entity ID 1 in the text
+        # Set up extractor to find entity IDs 1 and 2 in the text
         extractor._entity_map = {"Claude": 1, "GPT-4o": 2}
 
         # Mock session: execute called twice (insert + count query)
         mock_session = AsyncMock()
 
-        # First execute: the pg_insert ON CONFLICT statement
-        insert_result = MagicMock()
-        # Second execute: the count SELECT query
+        # Second execute: the count SELECT query returns 2 rows
         count_result = MagicMock()
         count_result.all = MagicMock(return_value=[MagicMock(), MagicMock()])  # 2 rows
 
-        mock_session.execute = AsyncMock(side_effect=[insert_result, count_result])
+        mock_session.execute = AsyncMock(side_effect=[MagicMock(), count_result])
         mock_session.commit = AsyncMock()
 
-        result = await extract_and_save_mentions(
-            session=mock_session,
-            post_id=42,
-            text="I use Claude and GPT-4o daily",
-            extractor=extractor,
-        )
+        # Patch pg_insert and select to avoid SQLAlchemy validation of the model class
+        # (PostEntityMention may be a MagicMock in local Python 3.14 env with db stubs)
+        with patch("pipeline.services.mention_service.pg_insert") as mock_pg_insert, \
+             patch("pipeline.services.mention_service.select") as mock_select:
+            mock_stmt = MagicMock()
+            mock_pg_insert.return_value.values.return_value.on_conflict_do_nothing.return_value = mock_stmt
+            # select(...).where(...) must be chainable and return a statement
+            mock_select.return_value.where.return_value = MagicMock()
+
+            result = await extract_and_save_mentions(
+                session=mock_session,
+                post_id=42,
+                text="I use Claude and GPT-4o daily",
+                extractor=extractor,
+            )
 
         assert result == 2
         assert mock_session.execute.call_count == 2  # insert + count
@@ -160,8 +167,10 @@ class TestExtractAndSaveMentions:
         mock_session.execute = AsyncMock(side_effect=[insert_result, count_result])
         mock_session.commit = AsyncMock()
 
-        # Patch pg_insert to capture the statement being built
-        with patch("pipeline.services.mention_service.pg_insert") as mock_pg_insert:
+        # Patch pg_insert and select to capture the statement and avoid SQLAlchemy
+        # validation failures when PostEntityMention is a MagicMock (Python 3.14 env)
+        with patch("pipeline.services.mention_service.pg_insert") as mock_pg_insert, \
+             patch("pipeline.services.mention_service.select") as mock_select:
             # Set up mock chain: pg_insert(...).values([...]).on_conflict_do_nothing()
             mock_insert_obj = MagicMock()
             mock_values_obj = MagicMock()
@@ -170,6 +179,9 @@ class TestExtractAndSaveMentions:
             mock_pg_insert.return_value = mock_insert_obj
             mock_insert_obj.values.return_value = mock_values_obj
             mock_values_obj.on_conflict_do_nothing.return_value = mock_conflict_obj
+
+            # select(...).where(...) must be chainable
+            mock_select.return_value.where.return_value = MagicMock()
 
             await extract_and_save_mentions(
                 session=mock_session,
