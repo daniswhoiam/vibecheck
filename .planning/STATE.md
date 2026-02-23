@@ -38,6 +38,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 06-04]: Job factory closure _make_scheduled_job creates fresh coroutine per trigger; each run gets its own AsyncSession
 - [Phase 06-04]: Stagger: HN +0m, Reddit +30m, Discourse +60m, Dev.to +90m to smooth resource usage across 6h cycle
 
+**07-01 (2026-02-23):**
+- rollup_date stored as TIMESTAMP(timezone=True) (midnight UTC) not SQLAlchemy Date — consistent with schema, avoids TZ edge cases in aggregation queries
+- SQLAlchemy JSON type used for source_breakdown — maps to PostgreSQL JSONB automatically without explicit import
+- sentiment_label indexed for efficient unscored-post queries (WHERE sentiment_label IS NULL)
+
 **07-02 (2026-02-23):**
 - device=-1 (CPU) set explicitly in HuggingFace pipeline — Render Standard tier has no GPU, avoids CUDA warnings
 - On-demand model load/unload per classify() call — 3s load time tradeoff for minimal baseline memory between 6h cycles
@@ -63,8 +68,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
-Stopped at: Completed 07-02-PLAN.md
-Resume: Phase 07 Plan 02 complete — ready for Plan 03 (score_sentiment job)
+Stopped at: Completed 07-01-PLAN.md (retrospective — executed after 07-02)
+Resume: Phase 07 Plans 01 and 02 complete — ready for Plan 03 (score_sentiment job)
 
 Config:
 {
