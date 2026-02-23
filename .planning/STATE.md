@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 08-tier-2-llm-aspect-extraction (Plan 4 of 5)
-Plan: 08-04
+Phase: 08-tier-2-llm-aspect-extraction (Plan 5 of 5)
+Plan: 08-05
 Status: Complete
-Last activity: 2026-02-23 — Completed 08-04 (extract_aspects.py job: routing query, LLM call, aspect storage, 30/30 tests GREEN)
+Last activity: 2026-02-23 — Completed 08-05 (scheduler pipeline chain: extract_aspects wired as Step 4, 30/30 tests GREEN)
 
 ## Accumulated Context
 
@@ -86,6 +86,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - conftest _MockModel metaclass pattern: class-level __getattr__ needed (not instance) for SQLAlchemy column access via Post.sentiment_score — reuse for future test files
 - tenacity identity-decorator stub in conftest: retry = lambda **kwargs: (lambda fn: fn) makes @retry() no-op, enabling local testing without tenacity installed
 
+**08-05 (2026-02-23):**
+- No new architectural decisions — plan executed as specified following 07-05 established patterns
+- Same try/except fault-isolation pattern used for Step 4 (extract_aspects) as Steps 1-3 in wrapped_pipeline_execution()
+- extract_aspects is idempotent (NOT EXISTS check): safe to call 4x per 6h cycle (once per source job)
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -103,8 +108,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
-Stopped at: Completed 08-04-PLAN.md (extract_aspects.py job: routing query, LLM call, aspect storage, 30/30 tests GREEN)
-Resume: Phase 08 plan 4 of 5 complete — continue with 08-05 (scheduler pipeline chain integration)
+Stopped at: Completed 08-05-PLAN.md (scheduler pipeline chain integration: extract_aspects as Step 4, 30/30 tests GREEN)
+Resume: Phase 08 complete (5/5 plans done) — SENT-02 requirement fulfilled, ready for next milestone
 
 Config:
 {
