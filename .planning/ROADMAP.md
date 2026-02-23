@@ -24,7 +24,7 @@
 #### Phase Checklist
 
 - [x] **Phase 5: Infrastructure** — Schema migration, dependency cleanup, and Render upgrade
-- [ ] **Phase 6: Data Collection** — All five free source collectors wired in with filtering and deduplication
+- [x] **Phase 6: Data Collection** — All five free source collectors wired in with filtering and deduplication
 - [x] **Phase 7: Tier 1 Sentiment + Aggregation** — RoBERTa pipeline running, aggregation job writing per-source timeseries, API extended (completed 2026-02-23)
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
 - [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
@@ -59,10 +59,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Shared foundation: PostCreate model, FilterService (ambiguity-aware), StorageService with dedup
-- [ ] 06-02-PLAN.md — HN Algolia + Discourse REST collectors (Wave 2, parallel with 06-03)
-- [ ] 06-03-PLAN.md — Reddit asyncpraw + Dev.to Forem API collectors (Wave 2, parallel with 06-02)
-- [ ] 06-04-PLAN.md — Scheduler wiring: setup_jobs() with 4 staggered jobs + end-to-end verification
+- [x] 06-01-PLAN.md — Shared foundation: PostCreate model, FilterService (ambiguity-aware), StorageService with dedup
+- [x] 06-02-PLAN.md — HN Algolia + Discourse REST collectors (Wave 2, parallel with 06-03)
+- [x] 06-03-PLAN.md — Reddit asyncpraw + Dev.to Forem API collectors (Wave 2, parallel with 06-02)
+- [x] 06-04-PLAN.md — Scheduler wiring: setup_jobs() with 4 staggered jobs + end-to-end verification
 
 ### Phase 7: Tier 1 Sentiment + Aggregation
 **Goal**: Every collected post has a GliClass sentiment score, sentiment_rollup rows include per-source JSONB breakdown, and the API exposes source breakdown data via the existing /entities/{id}/sentiment endpoint
@@ -76,11 +76,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Schema foundation: Post sentiment columns + SentimentRollup ORM + Alembic migrations 007+008 + fix db/__init__.py
-- [ ] 07-02-PLAN.md — ML dependencies + SentimentClassifier service (GliClass zero-shot, on-demand load)
-- [ ] 07-03-PLAN.md — Scoring job (score_sentiment) + Aggregation job (aggregate_sentiment with JSONB rollup)
-- [ ] 07-04-PLAN.md — API rewrite: sentiment endpoint queries SentimentRollup, remove v1.0 SentimentTimeseries refs
-- [ ] 07-05-PLAN.md — Scheduler chaining: collect→score→aggregate pipeline per source
+- [x] 07-01-PLAN.md — Schema foundation: Post sentiment columns + SentimentRollup ORM + Alembic migrations 007+008 + fix db/__init__.py
+- [x] 07-02-PLAN.md — ML dependencies + SentimentClassifier service (GliClass zero-shot, on-demand load)
+- [x] 07-03-PLAN.md — Scoring job (score_sentiment) + Aggregation job (aggregate_sentiment with JSONB rollup)
+- [x] 07-04-PLAN.md — API rewrite: sentiment endpoint queries SentimentRollup, remove v1.0 SentimentTimeseries refs
+- [x] 07-05-PLAN.md — Scheduler chaining: collect→score→aggregate pipeline per source
 
 ### Phase 8: Tier 2 LLM + Aspect Extraction
 **Goal**: Posts with ambiguous or non-neutral Tier 1 scores are processed by the configured LLM and aspect-level sentiment is stored per tool mention
@@ -93,11 +93,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — TDD Wave 0: failing test scaffolds for provider, extraction, and aspect API
-- [ ] 08-02-PLAN.md — LLM provider abstraction: GroqProvider, OpenAIProvider, get_llm_provider factory, Pydantic validation
-- [ ] 08-03-PLAN.md — Aspect API endpoint: GET /entities/{id}/aspects with 7d/30d/90d windows and source filter
-- [ ] 08-04-PLAN.md — Aspect extraction job: run_extract_aspects with confidence routing and per-entity aspect storage
-- [ ] 08-05-PLAN.md — Scheduler wiring: extract_aspects as Step 4 in collect→score→aggregate→extract pipeline chain
+- [x] 08-01-PLAN.md — TDD Wave 0: failing test scaffolds for provider, extraction, and aspect API
+- [x] 08-02-PLAN.md — LLM provider abstraction: GroqProvider, OpenAIProvider, get_llm_provider factory, Pydantic validation
+- [x] 08-03-PLAN.md — Aspect API endpoint: GET /entities/{id}/aspects with 7d/30d/90d windows and source filter
+- [x] 08-04-PLAN.md — Aspect extraction job: run_extract_aspects with confidence routing and per-entity aspect storage
+- [x] 08-05-PLAN.md — Scheduler wiring: extract_aspects as Step 4 in collect→score→aggregate→extract pipeline chain
 
 ### Phase 9: Frontend Evolution
 **Goal**: Users can see which data sources are driving sentiment and can explore aspect-level breakdowns per entity
@@ -112,10 +112,10 @@ Plans:
 Plans:
 - [x] 09-01-PLAN.md — TDD Wave 0: failing test scaffolds for source filter, aspect chart, hook, and detail page integration
 - [x] 09-02-PLAN.md — Foundation layer: AspectSentimentData types, fetchAspectSentiment API, useAspectSentiment hook, shadcn UI components
-- [ ] 09-03-PLAN.md — SourceFilterToggle component: pill-style segmented toggle with 5 source options
-- [ ] 09-04-PLAN.md — AspectSentimentChart component: horizontal diverging bar chart for 7 aspects
-- [ ] 09-05-PLAN.md — Detail.tsx integration: wire source filter + aspect section, URL persistence, full test suite GREEN
-- [ ] 09-06-PLAN.md — Visual checkpoint: user verification of complete Phase 9 UI experience
+- [x] 09-03-PLAN.md — SourceFilterToggle component: pill-style segmented toggle with 5 source options
+- [x] 09-04-PLAN.md — AspectSentimentChart component: horizontal diverging bar chart for 7 aspects
+- [x] 09-05-PLAN.md — Detail.tsx integration: wire source filter + aspect section, URL persistence, full test suite GREEN
+- [x] 09-06-PLAN.md — Visual checkpoint: user verification of complete Phase 9 UI experience
 
 ### Phase 10: Verification & Documentation Cleanup
 **Goal**: All v2.0 requirements are formally verified, REQUIREMENTS.md traceability is complete, and ROADMAP.md reflects accurate completion state
@@ -130,7 +130,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 10-01-PLAN.md — Create Phase 5 VERIFICATION.md and retrofit SUMMARY frontmatter (INFRA-01, INFRA-02, INFRA-03)
+- [x] 10-01-PLAN.md — Create Phase 5 VERIFICATION.md and retrofit SUMMARY frontmatter (INFRA-01, INFRA-02, INFRA-03)
 - [ ] 10-02-PLAN.md — Update REQUIREMENTS.md traceability and ROADMAP.md progress/checkboxes
 
 ## Progress
@@ -142,11 +142,12 @@ Plans:
 | 3. API & Integration | v1.0 | 3/3 | Complete | 2026-02-05 |
 | 3.1. Entity Seeding Automation | v1.0 | 1/1 | Complete | 2026-02-05 |
 | 5. Infrastructure | v2.0 | 2/2 | Complete | 2026-02-19 |
-| 6. Data Collection | 3/4 | In Progress|  | - |
-| 7. Tier 1 Sentiment + Aggregation | 5/5 | Complete    | 2026-02-23 | - |
-| 8. Tier 2 LLM + Aspect Extraction | 5/5 | Complete   | 2026-02-23 | - |
-| 9. Frontend Evolution | 5/6 | Complete    | 2026-02-23 | - |
+| 6. Data Collection | v2.0 | 4/4 | Complete | 2026-02-23 |
+| 7. Tier 1 Sentiment + Aggregation | v2.0 | 5/5 | Complete | 2026-02-23 |
+| 8. Tier 2 LLM + Aspect Extraction | v2.0 | 5/5 | Complete | 2026-02-23 |
+| 9. Frontend Evolution | v2.0 | 6/6 | Complete | 2026-02-23 |
+| 10. Verification & Documentation Cleanup | v2.0 | 0/2 | In Progress | - |
 
 ---
 *Roadmap created: 2026-02-05*
-*Last updated: 2026-02-19 (v2.0 milestone phases added)*
+*Last updated: 2026-02-23 (Phase 10 documentation cleanup)*
