@@ -1,18 +1,23 @@
 """APScheduler integration for automated data pipeline jobs.
 
 Manages scheduled job execution with health monitoring and audit logging.
-Job registrations placeholder — new source jobs will be added in Phase 6.
+All four Phase 6 data collection jobs are registered in setup_jobs().
 """
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Callable
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db.session import get_session
+from db.session import AsyncSessionLocal
 from db.models import SchedulerExecutionLog
+
+from pipeline.jobs.collect_hackernews import run_collect_hackernews
+from pipeline.jobs.collect_reddit import run_collect_reddit
+from pipeline.jobs.collect_discourse import run_collect_discourse
+from pipeline.jobs.collect_devto import run_collect_devto
 
 logger = logging.getLogger(__name__)
 
@@ -104,12 +109,55 @@ async def wrapped_job_execution(
 
 
 def setup_jobs() -> None:
-    """Register scheduled jobs with APScheduler.
+    """Register all data collection jobs with APScheduler.
 
-    Placeholder — job registrations removed in Phase 5 cleanup.
-    New data source collection jobs will be added in Phase 6.
+    Four collection sources, each running every 6 hours.
+    Staggered 30 minutes apart to smooth resource usage:
+      - HN:        runs at startup time (no delay)
+      - Reddit:    runs 30 minutes after startup
+      - Discourse: runs 60 minutes after startup
+      - Dev.to:    runs 90 minutes after startup
+
+    Uses replace_existing=True + explicit id= to prevent duplicate job
+    accumulation on app restarts / hot reloads.
+
+    Each job is wrapped in wrapped_job_execution() which:
+    - Creates its own AsyncSession
+    - Logs to SchedulerExecutionLog
+    - Captures exceptions without crashing the scheduler
     """
-    pass
+    from apscheduler.triggers.interval import IntervalTrigger
+
+    now = datetime.now(timezone.utc)
+
+    def _make_scheduled_job(job_name: str, job_func):
+        """Create the APScheduler-compatible wrapper that manages its own session."""
+        async def _job():
+            async with AsyncSessionLocal() as db_session:
+                await wrapped_job_execution(job_name, job_func, db_session)
+        return _job
+
+    job_definitions = [
+        ("collect_hackernews", run_collect_hackernews, 0),    # No delay
+        ("collect_reddit",     run_collect_reddit,     30),   # +30 min
+        ("collect_discourse",  run_collect_discourse,  60),   # +60 min
+        ("collect_devto",      run_collect_devto,      90),   # +90 min
+    ]
+
+    for job_name, job_func, delay_minutes in job_definitions:
+        scheduler.add_job(
+            _make_scheduled_job(job_name, job_func),
+            trigger=IntervalTrigger(hours=6),
+            next_run_time=now + timedelta(minutes=delay_minutes),
+            id=job_name,
+            replace_existing=True,
+            name=job_name,
+        )
+        logger.info(
+            "Registered job '%s' — interval=6h, first_run=%s",
+            job_name,
+            (now + timedelta(minutes=delay_minutes)).isoformat(),
+        )
 
 
 async def get_job_health() -> dict[str, Any]:
@@ -126,8 +174,12 @@ async def get_job_health() -> dict[str, Any]:
         }
     """
     now = datetime.now(timezone.utc)
-    # Job configs will be populated when Phase 6 adds real jobs
-    job_configs: dict[str, dict] = {}
+    job_configs: dict[str, dict] = {
+        "collect_hackernews": {"interval_minutes": 360},
+        "collect_reddit":     {"interval_minutes": 360},
+        "collect_discourse":  {"interval_minutes": 360},
+        "collect_devto":      {"interval_minutes": 360},
+    }
 
     jobs_status = {}
     all_healthy = True
