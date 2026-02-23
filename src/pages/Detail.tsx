@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import Header from "@/components/Header";
 import SentimentBar from "@/components/SentimentBar";
@@ -20,10 +20,13 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import { useToolDetail, useTools } from "@/hooks/useTools";
 import { useLanguage } from "@/hooks/useLanguage";
+import { SourceFilterToggle } from "@/components/SourceFilterToggle";
+import { AspectSentimentChart } from "@/components/AspectSentimentChart";
+import { useAspectSentiment } from "@/hooks/useAspectSentiment";
+import type { SourceFilter } from "@/types/api";
 
 const Detail = () => {
   const { id } = useParams<{ id: string }>();
@@ -32,10 +35,44 @@ const Detail = () => {
   const { data: tool, isLoading, error } = useToolDetail(id);
   const { data: allTools } = useTools();
 
+  // URL-persisted source filter state
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedSource = (searchParams.get("source") ?? "all") as SourceFilter;
+  const setSelectedSource = (source: SourceFilter) => {
+    if (source === "all") {
+      setSearchParams(prev => { prev.delete("source"); return prev; });
+    } else {
+      setSearchParams(prev => { prev.set("source", source); return prev; });
+    }
+  };
+
+  // Fetch aspect sentiment data, filtered by selected source
+  const { data: aspectData, isLoading: isAspectLoading } = useAspectSentiment(
+    id,
+    "7d",
+    selectedSource !== "all" ? selectedSource : undefined
+  );
+
   // Get related tools from the same company
   const relatedTools = allTools?.filter(
     (t) => t.company === tool?.company
   ) ?? [];
+
+  // Filter recent mentions client-side by selected source
+  const sourceDisplayMap: Record<string, string[]> = {
+    hn: ["HN", "Hacker News"],
+    reddit: ["Reddit"],
+    discourse: ["Discourse"],
+    devto: ["Dev.to", "DevTo", "devto"],
+  };
+
+  const filteredMentions = selectedSource === "all"
+    ? tool?.recentMentions ?? []
+    : (tool?.recentMentions ?? []).filter(m =>
+        (sourceDisplayMap[selectedSource] ?? [selectedSource]).some(s =>
+          m.source.toLowerCase().includes(s.toLowerCase())
+        )
+      );
 
   if (isLoading) {
     return (
@@ -55,6 +92,8 @@ const Detail = () => {
               <Skeleton key={i} className="h-24 rounded-2xl" />
             ))}
           </div>
+          <Skeleton className="h-10 w-full rounded-full mb-6" /> {/* source filter */}
+          <Skeleton className="h-48 rounded-2xl mb-8" />           {/* aspect chart */}
           <Skeleton className="h-80 rounded-2xl" />
         </main>
       </div>
@@ -66,8 +105,8 @@ const Detail = () => {
       <div className="min-h-screen bg-background">
         <Header />
         <main className="container mx-auto px-6 pt-24 pb-12">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 mb-6"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -81,19 +120,20 @@ const Detail = () => {
     );
   }
 
+  // TODO: filter stats by source when source_breakdown is available in ToolDetail type
   const sentimentPercent = Math.round(
-    (tool.sentiment.positive / 
+    (tool.sentiment.positive /
       (tool.sentiment.positive + tool.sentiment.neutral + tool.sentiment.negative)) * 100
   );
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto px-6 pt-24 pb-12">
         {/* Back Link */}
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -140,6 +180,11 @@ const Detail = () => {
           </Select>
         </div>
 
+        {/* Source Filter */}
+        <div className="mb-6">
+          <SourceFilterToggle value={selectedSource} onChange={setSelectedSource} />
+        </div>
+
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Card className="rounded-2xl border-border/50">
@@ -159,26 +204,12 @@ const Detail = () => {
         </div>
 
         {/* Sentiment Trend Chart */}
+        {/* Simplified to aggregate only — source-filtered timeseries requires backend change in future phase */}
         <Card className="rounded-2xl border-border/50 mb-8">
           <CardHeader>
             <CardTitle className="text-lg font-semibold">{t("trendLast6Months")}</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Legend showing what each line represents */}
-            <div className="flex items-center gap-6 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[hsl(var(--sentiment-positive))]" />
-                <span className="text-sm text-muted-foreground">Gesamt (News + Reddit)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-blue-500" />
-                <span className="text-sm text-muted-foreground">News</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-orange-500" />
-                <span className="text-sm text-muted-foreground">Reddit</span>
-              </div>
-            </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={tool.trendData}>
@@ -211,16 +242,8 @@ const Detail = () => {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "12px",
                     }}
-                    formatter={(value: number, name: string) => {
-                      const labels: Record<string, string> = {
-                        sentiment: "Gesamt",
-                        newsSentiment: "News",
-                        redditSentiment: "Reddit",
-                      };
-                      return [`${value}%`, labels[name] || name];
-                    }}
+                    formatter={(value: number) => [`${value}%`, "Sentiment"]}
                   />
-                  {/* Aggregated sentiment line (main) */}
                   <Line
                     type="monotone"
                     dataKey="sentiment"
@@ -229,30 +252,35 @@ const Detail = () => {
                     dot={false}
                     fill="url(#sentimentGradient)"
                   />
-                  {/* News sentiment line (dashed) */}
-                  <Line
-                    type="monotone"
-                    dataKey="newsSentiment"
-                    stroke="rgb(59 130 246)" // blue-500
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={false}
-                  />
-                  {/* Reddit sentiment line (dotted) */}
-                  {tool.trendData.some(d => d.redditSentiment !== null) && (
-                    <Line
-                      type="monotone"
-                      dataKey="redditSentiment"
-                      stroke="rgb(249 115 22)" // orange-500
-                      strokeWidth={2}
-                      strokeDasharray="2 2"
-                      dot={false}
-                      connectNulls={false}
-                    />
-                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Sentiment by Aspect */}
+        <Card className="rounded-2xl border-border/50 mb-8">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">Sentiment by Aspect</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isAspectLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                  <Skeleton key={i} className="h-8 w-full rounded" />
+                ))}
+              </div>
+            ) : aspectData ? (
+              <AspectSentimentChart
+                data={aspectData.aspects}
+                source={selectedSource !== "all" ? selectedSource : undefined}
+                onClearFilter={() => setSelectedSource("all")}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No aspect data available yet.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -265,8 +293,8 @@ const Detail = () => {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {tool.bestFor.map((tag) => (
-                  <Badge 
-                    key={tag} 
+                  <Badge
+                    key={tag}
                     variant="secondary"
                     className="rounded-full px-3 py-1 text-sm"
                   >
@@ -285,7 +313,7 @@ const Detail = () => {
                 <span className="text-3xl font-semibold">{tool.rating.toFixed(1)}</span>
                 <span className="text-muted-foreground">/ 5.0</span>
               </div>
-              <SentimentBar 
+              <SentimentBar
                 positive={tool.sentiment.positive}
                 neutral={tool.sentiment.neutral}
                 negative={tool.sentiment.negative}
@@ -302,7 +330,7 @@ const Detail = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {tool.recentMentions.map((mention) => (
+              {filteredMentions.map((mention) => (
                 <div
                   key={mention.id}
                   className={`p-4 rounded-xl border ${mention.source === "Reddit" ? "bg-orange-500/5 border-orange-500/20" : "bg-secondary/50 border-border/30"}`}
