@@ -11,7 +11,7 @@ Requirements for v2.0 Free Pipeline milestone. Each maps to roadmap phases.
 
 - [x] **INFRA-01**: System migrates to new schema (posts, tool_mentions, aspect_sentiments) via Alembic without breaking existing data
 - [x] **INFRA-02**: AskNews SDK removed and httpx upgraded to 0.28.1
-- [x] **INFRA-03**: Render deployment upgraded to Standard tier ($25/mo) for ML model support
+- [~] **INFRA-03**: Render deployment superseded — Phase 5 CONTEXT.md decision: "Leave Render entirely" replaced Render Standard tier upgrade with platform migration
 
 ### Data Collection
 
@@ -72,27 +72,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | 05 | Complete |
-| INFRA-02 | 05 | Complete |
-| INFRA-03 | 05 | Complete |
-| COLL-01 | — | Complete |
-| COLL-02 | — | Complete |
-| COLL-03 | — | Complete |
-| COLL-04 | — | Complete |
-| COLL-05 | — | Complete |
-| COLL-06 | — | Complete |
-| SENT-01 | — | Complete |
-| SENT-02 | — | Complete |
-| SENT-03 | — | Complete |
-| SENT-04 | — | Complete |
-| FRON-01 | — | Complete |
-| FRON-02 | — | Complete |
+| INFRA-01 | 5 | Complete |
+| INFRA-02 | 5 | Complete |
+| INFRA-03 | 5 | Resolved (superseded by platform migration decision) |
+| COLL-01 | 6 | Complete |
+| COLL-02 | 6 | Complete |
+| COLL-03 | 6 | Complete |
+| COLL-04 | 6 | Complete |
+| COLL-05 | 6 | Complete |
+| COLL-06 | 6 | Complete |
+| SENT-01 | 7 | Complete |
+| SENT-02 | 8 | Complete |
+| SENT-03 | 8 | Complete |
+| SENT-04 | 8 | Complete |
+| FRON-01 | 9 | Complete |
+| FRON-02 | 9 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 15 total
-- Mapped to phases: 3
-- Unmapped: 12 (traceability table update pending in Phase 10)
+- Mapped to phases: 15 (traceability complete — Phase 10)
+- Complete: 14 (INFRA-01/02, COLL-01..06, SENT-01..04, FRON-01/02)
+- Resolved/Superseded: 1 (INFRA-03 — Render tier replaced by platform migration)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-19*
-*Last updated: 2026-02-19 after initial definition*
+*Last updated: 2026-02-23 — Phase 10 traceability update*
