@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 09-frontend-evolution (Plan 2 of 5)
-Plan: 09-02
+Phase: 09-frontend-evolution (Plan 3 of 5)
+Plan: 09-03
 Status: Complete
-Last activity: 2026-02-23 — Completed 09-02 (Data layer foundation: AspectSentimentData types, fetchAspectSentiment API function, useAspectSentiment hook, shadcn toggle-group/skeleton/badge/select components)
+Last activity: 2026-02-23 — Completed 09-03 (SourceFilterToggle: pill-style segmented toggle button group for source filtering with Radix ToggleGroup, 3/3 unit tests GREEN)
 
 ## Accumulated Context
 
@@ -102,6 +102,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - useAspectSentiment uses enabled: !!entityId — prevents fetch before route param resolves
 - URLSearchParams (not string interpolation) for clean optional query param construction
 
+**09-03 (2026-02-23):**
+- Radix ToggleGroup type=single sends empty string on active item click — guard with if (!newValue) return prevents deselecting all sources
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -119,8 +122,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
-Stopped at: Completed 09-02-PLAN.md (Data layer foundation: types, API service, React Query hook, shadcn components)
-Resume: Phase 09, Plan 3 of 5 — implement SourceFilterToggle component (turns SourceFilterToggle.test.tsx GREEN)
+Stopped at: Completed 09-03-PLAN.md (SourceFilterToggle: pill-style segmented toggle button group, 3/3 unit tests GREEN)
+Resume: Phase 09, Plan 4 of 5 — integrate SourceFilterToggle and useAspectSentiment into Detail page
 
 Config:
 {
