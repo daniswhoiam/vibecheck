@@ -4,7 +4,7 @@
 // Production: VITE_API_BASE_URL set via Render environment variables
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
-import type { Tool, ToolDetail } from "@/types/api";
+import type { Tool, ToolDetail, AspectSentimentData } from "@/types/api";
 import { toTool, toToolDetail } from "./entityTransformer";
 
 // =============================================================================
@@ -53,6 +53,35 @@ export async function fetchToolDetail(id: string): Promise<ToolDetail | null> {
     return toToolDetail(entity);
   } catch (error) {
     console.error("Error fetching tool detail:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch aspect-level sentiment for an entity
+ * Calls GET /entities/{id}/aspects with window and optional source filter
+ */
+export async function fetchAspectSentiment(
+  entityId: string,
+  window: "7d" | "30d" | "90d" = "7d",
+  source?: string
+): Promise<AspectSentimentData> {
+  try {
+    const params = new URLSearchParams({ window });
+    if (source && source !== "all") params.append("source", source);
+
+    const response = await fetch(
+      `${BASE_URL}/entities/${entityId}/aspects?${params}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch aspects: ${response.status} ${response.statusText}`);
+    }
+
+    const data: AspectSentimentData = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching aspect data:", error);
     throw error;
   }
 }
