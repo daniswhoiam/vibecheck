@@ -34,6 +34,9 @@ class Entity(Base):
     aspect_sentiments: Mapped[list["AspectSentiment"]] = relationship(
         back_populates="entity", cascade="all, delete-orphan"
     )
+    sentiment_rollups: Mapped[list["SentimentRollup"]] = relationship(
+        back_populates="entity", cascade="all, delete-orphan"
+    )
 
 
 class Post(Base):
@@ -59,6 +62,8 @@ class Post(Base):
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
     )
+    sentiment_label: Mapped[str | None] = mapped_column(String(20), nullable=True, index=True)
+    sentiment_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     # Relationships
     entity_mentions: Mapped[list["PostEntityMention"]] = relationship(
@@ -135,6 +140,42 @@ class AspectSentiment(Base):
         CheckConstraint('score >= -1.0 AND score <= 1.0', name='ck_aspect_sentiments_score'),
         UniqueConstraint('post_id', 'entity_id', 'aspect', name='uq_aspect_sentiments'),
         Index('ix_aspect_sentiments_entity_aspect', 'entity_id', 'aspect'),
+    )
+
+
+class SentimentRollup(Base):
+    """Daily sentiment rollup with per-source breakdown.
+
+    One row per (entity, day). Incrementally recomputed for the current UTC day
+    on each aggregation job run. Past days are immutable once written.
+
+    source_breakdown JSON structure:
+        {"hn": {"mean": 0.4, "count": 12}, "reddit": {"mean": -0.1, "count": 8}, ...}
+    """
+    __tablename__ = "sentiment_rollup"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    entity_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("entities.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    rollup_date: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), nullable=False
+    )
+    sentiment_mean: Mapped[float | None] = mapped_column(Float, nullable=True)
+    post_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    source_breakdown: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    entity: Mapped["Entity"] = relationship(back_populates="sentiment_rollups")
+
+    __table_args__ = (
+        UniqueConstraint('entity_id', 'rollup_date', name='uq_sentiment_rollup_entity_date'),
+        Index('ix_sentiment_rollup_entity_date', 'entity_id', 'rollup_date'),
     )
 
 
