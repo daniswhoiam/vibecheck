@@ -109,8 +109,8 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 09-01-PLAN.md — TDD Wave 0: failing test scaffolds for source filter, aspect chart, hook, and detail page integration
-- [ ] 09-02-PLAN.md — Foundation layer: AspectSentimentData types, fetchAspectSentiment API, useAspectSentiment hook, shadcn UI components
+- [x] 09-01-PLAN.md — TDD Wave 0: failing test scaffolds for source filter, aspect chart, hook, and detail page integration
+- [x] 09-02-PLAN.md — Foundation layer: AspectSentimentData types, fetchAspectSentiment API, useAspectSentiment hook, shadcn UI components
 - [ ] 09-03-PLAN.md — SourceFilterToggle component: pill-style segmented toggle with 5 source options
 - [ ] 09-04-PLAN.md — AspectSentimentChart component: horizontal diverging bar chart for 7 aspects
 - [ ] 09-05-PLAN.md — Detail.tsx integration: wire source filter + aspect section, URL persistence, full test suite GREEN
@@ -128,7 +128,7 @@ Plans:
 | 6. Data Collection | 3/4 | In Progress|  | - |
 | 7. Tier 1 Sentiment + Aggregation | 5/5 | Complete    | 2026-02-23 | - |
 | 8. Tier 2 LLM + Aspect Extraction | 5/5 | Complete   | 2026-02-23 | - |
-| 9. Frontend Evolution | v2.0 | 0/? | Not started | - |
+| 9. Frontend Evolution | v2.0 | 2/6 | In Progress | - |
 
 ---
 *Roadmap created: 2026-02-05*

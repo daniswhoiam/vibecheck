@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 09-frontend-evolution (Plan 1 of 5)
-Plan: 09-01
+Phase: 09-frontend-evolution (Plan 2 of 5)
+Plan: 09-02
 Status: Complete
-Last activity: 2026-02-23 — Completed 09-01 (Wave 0 TDD RED scaffolds: 5 test files, 13 failing tests for useAspectSentiment, SourceFilterToggle, AspectSentimentChart, Detail page)
+Last activity: 2026-02-23 — Completed 09-02 (Data layer foundation: AspectSentimentData types, fetchAspectSentiment API function, useAspectSentiment hook, shadcn toggle-group/skeleton/badge/select components)
 
 ## Accumulated Context
 
@@ -97,6 +97,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Detail.test.tsx uses vi.mock() at module level (not vi.spyOn) — required for React module mocking with vitest/vite
 - createQueryClient() helper with retry=false, staleTime=Infinity — prevents flaky async behavior in React Query tests
 
+**09-02 (2026-02-23):**
+- fetchAspectSentiment skips source param when value is "all" or undefined — backend interprets absence as all-sources aggregation
+- useAspectSentiment uses enabled: !!entityId — prevents fetch before route param resolves
+- URLSearchParams (not string interpolation) for clean optional query param construction
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -114,8 +119,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
-Stopped at: Completed 09-01-PLAN.md (Wave 0 TDD RED scaffolds: 5 test files fail with "Cannot find module" import errors)
-Resume: Phase 09, Plan 2 of 5 — implement useAspectSentiment hook (turns useAspectSentiment.test.ts GREEN)
+Stopped at: Completed 09-02-PLAN.md (Data layer foundation: types, API service, React Query hook, shadcn components)
+Resume: Phase 09, Plan 3 of 5 — implement SourceFilterToggle component (turns SourceFilterToggle.test.tsx GREEN)
 
 Config:
 {
