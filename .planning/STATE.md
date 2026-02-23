@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 07-tier-1-sentiment-aggregation (Plan 2 of 4)
-Plan: 07-02
+Phase: 07-tier-1-sentiment-aggregation (Plan 4 of 5)
+Plan: 07-04
 Status: Complete
-Last activity: 2026-02-23 — Completed 07-02 (ML deps + SentimentClassifier with GliClass zero-shot classification)
+Last activity: 2026-02-23 — Completed 07-04 (API rewrite: sentiment route queries SentimentRollup, entities.py cleaned)
 
 ## Accumulated Context
 
@@ -51,6 +51,13 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - MAX_CHARS=2000 truncation — ~512 tokens for typical English developer text
 - DEFAULT_BATCH_SIZE=8 conservative start for 1.5GB memory budget
 
+**07-03 (2026-02-23):**
+- Model loaded once for all unscored posts, not per sub-batch — SentimentClassifier lifecycle is atomic (load-classify-unload) in single classify() call
+- Sub-batch commits for DB writes (SCORE_BATCH_SIZE=8) decoupled from classification — keeps individual transactions small
+- Signed sentiment mean (-1 to +1) in rollup — Positive=+1.0, Negative=-1.0, Neutral=0.0 for API-friendly display; raw confidence preserved in posts.sentiment_score
+- jsonb_object_agg in SQL (not Python-side grouping) for source_breakdown — atomic with aggregation, single DB round-trip
+- Idempotent upsert via on_conflict_do_update on (entity_id, rollup_date) — safe to rerun multiple times per day
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -68,8 +75,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
-Stopped at: Completed 07-01-PLAN.md (retrospective — executed after 07-02)
-Resume: Phase 07 Plans 01 and 02 complete — ready for Plan 03 (score_sentiment job)
+Stopped at: Completed 07-03-PLAN.md (score_sentiment + aggregate_sentiment jobs)
+Resume: Phase 07 Plans 01, 02, and 03 complete — ready for Plan 04
 
 Config:
 {
