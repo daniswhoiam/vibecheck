@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 07-tier-1-sentiment-aggregation (Plan 5 of 5)
-Plan: 07-05
+Phase: 08-tier-2-llm-aspect-extraction (Plan 1 of 5)
+Plan: 08-01
 Status: Complete
-Last activity: 2026-02-23 — Completed 07-05 (Scheduler pipeline chain: collect→score→aggregate per source)
+Last activity: 2026-02-23 — Completed 08-01 (TDD RED phase: failing test scaffolds for LLM provider, aspect extraction, aspect API)
 
 ## Accumulated Context
 
@@ -68,6 +68,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Collection failure does not prevent scoring/aggregation from running — errors list accumulates, but all three steps always attempt
 - wrapped_job_execution() preserved (not deleted) for potential future non-collection job types
 
+**08-01 (2026-02-23):**
+- Assumption: GET /entities/{id}/aspects for entity with no aspect data returns 200 with empty aspects dict (not 404)
+- All 7 aspects stored per entity per post (not sparse) — avoids ambiguity between "not mentioned" and "neutral=0.0"
+- Unmatched LLM entity names (not in PostEntityMention) are silently skipped, not treated as errors
+- Stats dict contract: {routed, extracted, errors} — all three keys must be present even on empty run
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -84,9 +90,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
-Stopped at: Completed 07-05-PLAN.md (Scheduler pipeline chain: collect→score→aggregate per source)
-Resume: Phase 07 all 5 plans complete — phase fully done
+Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
+Stopped at: Completed 08-01-PLAN.md (TDD RED phase: failing test scaffolds for LLM provider, aspect extraction, aspect API)
+Resume: Phase 08 plan 1 of 5 complete — continue with 08-02 (LLM provider implementation)
 
 Config:
 {
