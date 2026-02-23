@@ -29,7 +29,7 @@
 - [x] **Phase 8: Tier 2 LLM + Aspect Extraction** — LLM layer extracting aspect-level sentiment for high-value posts (completed 2026-02-23)
 - [x] **Phase 9: Frontend Evolution** — Source breakdown and aspect charts surfaced in UI (completed 2026-02-23)
 - [x] **Phase 10: Verification & Documentation Cleanup** — Close orphaned INFRA requirements, fix stale docs (completed 2026-02-23)
-- [ ] **Phase 11: Entity Linking** — Populate post_entity_mentions to unblock aggregation, aspect extraction, and frontend data
+- [x] **Phase 11: Entity Linking** — Populate post_entity_mentions to unblock aggregation, aspect extraction, and frontend data (completed 2026-02-23)
 
 ## Phase Details
 
@@ -166,7 +166,7 @@ Plans:
 | 8. Tier 2 LLM + Aspect Extraction | v2.0 | 5/5 | Complete | 2026-02-23 |
 | 9. Frontend Evolution | v2.0 | 6/6 | Complete | 2026-02-23 |
 | 10. Verification & Documentation Cleanup | v2.0 | Complete    | 2026-02-23 | 2026-02-23 |
-| 11. Entity Linking | 3/4 | In Progress|  | — |
+| 11. Entity Linking | 4/4 | Complete   | 2026-02-23 | — |
 
 ---
 *Roadmap created: 2026-02-05*

@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 11-entity-linking (Plan 3 of 3)
-Plan: 11-03
+Phase: 11-entity-linking (Plan 4 of 4)
+Plan: 11-04
 Status: Complete
-Last activity: 2026-02-23 — Completed 11-03 (pipeline mention extraction integration — all 4 collectors wired, storage_service.py return type fixed to Post|None)
+Last activity: 2026-02-23 — Completed 11-04 (end-to-end verification — backfill 51 posts → 66 mentions, 6 rollup rows, frontend chart shows real data)
 
 ## Accumulated Context
 
@@ -142,6 +142,16 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Mention extraction errors caught as warnings only — collection never aborted by extraction failure
 - HN collector: extraction applied to both stories and comments independently (both call save_post separately)
 
+**11-04 (2026-02-23):**
+- timescaledb-ha:pg16-latest removed from Docker Hub; replaced with timescale/timescaledb:latest-pg16 + shared_preload_libraries env var
+- Post.metadata renamed to post_metadata — SQLAlchemy DeclarativeBase reserves the 'metadata' attribute name
+- SQLAlchemy relationships on hypertable models need primaryjoin + viewonly=True (no DB-level FK on TimescaleDB hypertables)
+- aggregate_sentiment rewritten with CTEs (per_source + per_entity) — PostgreSQL prohibits nested aggregate AVG inside jsonb_object_agg
+- GLiClass sentiment model replaced with cross-encoder/nli-MiniLM2-L6-H768 (GLiClass unsupported in transformers>=5.0)
+- Alembic revision chain fixed: stub migration 435b852d9d02 + 009_merge_heads added to unify branches and create scheduler_execution_log table
+- TimescaleDB unique constraints must include partitioning column (published_at); plain uq_posts_content_hash dropped
+- Frontend useSentimentTimeSeries aligned to v2.0 backend: rollup_date field (not timestamp), post_count (not article_count)
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -159,8 +169,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 11-entity-linking)
-Stopped at: Completed 11-03-PLAN.md (pipeline mention extraction integration — all 4 collectors wired, storage_service.py return type fixed to Post|None)
-Resume: Phase 11 all 3 plans complete — entity linking gap closure finished
+Stopped at: Completed 11-04-PLAN.md (end-to-end verification — backfill + aggregation + frontend chart confirmed)
+Resume: Phase 11 fully complete (all 4 plans done) — entity linking gap closure finished; all requirements SENT-01, SENT-02, SENT-04, FRON-01, FRON-02 verified
 
 Config:
 {
