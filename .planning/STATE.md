@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 Phase: 06-data-collection (Plan 4 of 4)
 Plan: 06-04
-Status: In progress
-Last activity: 2026-02-23 — Completed 06-03 (Reddit + Dev.to collectors)
+Status: Complete
+Last activity: 2026-02-23 — Completed 06-04 (scheduler integration — all 4 jobs wired)
 
 ## Accumulated Context
 
@@ -34,6 +34,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Tool-specific and broad subreddits both call is_relevant() identically — distinction is structural, not logic-level
 - Dev.to seen_ids dedup before body fetch — saves API calls for articles appearing under multiple tags
 - BODY_FETCH_CONCURRENCY=5 caps concurrent /api/articles/{id} requests to avoid 429 without API key
+- [Phase 06-04]: AsyncSessionLocal used directly in scheduler (not get_session generator) — cleaner for APScheduler context
+- [Phase 06-04]: Job factory closure _make_scheduled_job creates fresh coroutine per trigger; each run gets its own AsyncSession
+- [Phase 06-04]: Stagger: HN +0m, Reddit +30m, Discourse +60m, Dev.to +90m to smooth resource usage across 6h cycle
 
 ### Known Tech Debt
 
@@ -52,8 +55,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 06-data-collection)
-Stopped at: Completed 06-03-PLAN.md
-Resume: Execute 06-04-PLAN.md (scheduler integration)
+Stopped at: Completed 06-04-PLAN.md
+Resume: Phase 06 complete — ready for Phase 07 (sentiment pipeline)
 
 Config:
 {
