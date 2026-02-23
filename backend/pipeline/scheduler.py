@@ -22,6 +22,7 @@ from pipeline.jobs.collect_discourse import run_collect_discourse
 from pipeline.jobs.collect_devto import run_collect_devto
 from pipeline.jobs.score_sentiment import run_score_sentiment
 from pipeline.jobs.aggregate_sentiment import run_aggregate_sentiment
+from pipeline.jobs.extract_aspects import run_extract_aspects
 
 logger = logging.getLogger(__name__)
 
@@ -117,16 +118,17 @@ async def wrapped_pipeline_execution(
     collect_func: Callable[[AsyncSession], dict[str, Any]],
     db_session: AsyncSession
 ) -> None:
-    """Execute collect → score → aggregate pipeline with audit logging.
+    """Execute collect → score → aggregate → extract_aspects pipeline with audit logging.
 
-    Chains three steps in sequence:
+    Chains four steps in sequence:
     1. Collect: fetch new posts from the source
     2. Score: classify any unscored posts with GliClass
     3. Aggregate: recompute today's sentiment rollup for all entities
+    4. Extract aspects: run LLM aspect extraction for low-confidence posts
 
     Each step is logged separately. Collect failures are logged but do not
-    prevent scoring/aggregation — previously unscored posts from earlier
-    runs should still be processed.
+    prevent scoring/aggregation/aspect-extraction — previously unscored posts
+    from earlier runs should still be processed.
 
     Args:
         job_name: Source identifier (e.g., 'collect_hackernews')
@@ -184,6 +186,21 @@ async def wrapped_pipeline_execution(
         logger.error("%s: aggregation failed: %s", job_name, exc, exc_info=True)
         pipeline_stats["aggregation"] = {"error": str(exc)}
         errors.append(f"aggregation: {exc}")
+
+    # Step 4: Extract aspects (always attempt — processes all low-confidence posts globally,
+    # not just ones collected in this run; each collect source triggers this but the job
+    # is idempotent so only unprocessed posts are touched)
+    try:
+        aspect_stats = await run_extract_aspects(db_session)
+        pipeline_stats["aspect_extraction"] = aspect_stats
+        logger.info(
+            "%s: extracted aspects for %s posts",
+            job_name, aspect_stats.get("extracted", "?")
+        )
+    except Exception as exc:
+        logger.error("%s: aspect extraction failed: %s", job_name, exc, exc_info=True)
+        pipeline_stats["aspect_extraction"] = {"error": str(exc)}
+        errors.append(f"aspect_extraction: {exc}")
 
     # Finalize log entry
     completed_at = datetime.now(timezone.utc)
