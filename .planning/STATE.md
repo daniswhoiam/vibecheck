@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-19)
 
 ## Current Position
 
-Phase: 08-tier-2-llm-aspect-extraction (Plan 5 of 5)
-Plan: 08-05
+Phase: 09-frontend-evolution (Plan 1 of 5)
+Plan: 09-01
 Status: Complete
-Last activity: 2026-02-23 — Completed 08-05 (scheduler pipeline chain: extract_aspects wired as Step 4, 30/30 tests GREEN)
+Last activity: 2026-02-23 — Completed 09-01 (Wave 0 TDD RED scaffolds: 5 test files, 13 failing tests for useAspectSentiment, SourceFilterToggle, AspectSentimentChart, Detail page)
 
 ## Accumulated Context
 
@@ -91,6 +91,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - Same try/except fault-isolation pattern used for Step 4 (extract_aspects) as Steps 1-3 in wrapped_pipeline_execution()
 - extract_aspects is idempotent (NOT EXISTS check): safe to call 4x per 6h cycle (once per source job)
 
+**09-01 (2026-02-23):**
+- All 7 aspects hardcoded in mockAspectResponse (not dynamic) — mirrors backend schema, tests pass with known values
+- mockEmptyAspectResponse defaults source='discourse' — matches the "No Discourse data indexed yet" empty state test scenario
+- Detail.test.tsx uses vi.mock() at module level (not vi.spyOn) — required for React module mocking with vitest/vite
+- createQueryClient() helper with retry=false, staleTime=Infinity — prevents flaky async behavior in React Query tests
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -107,9 +113,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 
 ## Session Continuity
 
-Last session: 2026-02-23 (Executing phase 08-tier-2-llm-aspect-extraction)
-Stopped at: Completed 08-05-PLAN.md (scheduler pipeline chain integration: extract_aspects as Step 4, 30/30 tests GREEN)
-Resume: Phase 08 complete (5/5 plans done) — SENT-02 requirement fulfilled, ready for next milestone
+Last session: 2026-02-23 (Executing phase 09-frontend-evolution)
+Stopped at: Completed 09-01-PLAN.md (Wave 0 TDD RED scaffolds: 5 test files fail with "Cannot find module" import errors)
+Resume: Phase 09, Plan 2 of 5 — implement useAspectSentiment hook (turns useAspectSentiment.test.ts GREEN)
 
 Config:
 {
