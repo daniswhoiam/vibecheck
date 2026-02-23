@@ -58,6 +58,11 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - jsonb_object_agg in SQL (not Python-side grouping) for source_breakdown — atomic with aggregation, single DB round-trip
 - Idempotent upsert via on_conflict_do_update on (entity_id, rollup_date) — safe to rerun multiple times per day
 
+**07-04 (2026-02-23):**
+- period param removed from GET /entities/{id}/sentiment — Phase 7 is daily-only per prior user decision
+- SentimentTimeseriesResponse class name kept (describes API response shape, not DB model)
+- source_breakdown typed Optional[Dict[str, Any]] matching SentimentRollup.source_breakdown JSON column
+
 ### Known Tech Debt
 
 - Unique constraint on `sentiment_timeseries(entity_id, timestamp, period)` not yet added
@@ -75,8 +80,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 ## Session Continuity
 
 Last session: 2026-02-23 (Executing phase 07-tier-1-sentiment-aggregation)
-Stopped at: Completed 07-03-PLAN.md (score_sentiment + aggregate_sentiment jobs)
-Resume: Phase 07 Plans 01, 02, and 03 complete — ready for Plan 04
+Stopped at: Completed 07-04-PLAN.md (API rewrite: SentimentRollup queries + SentimentTimeseries removal)
+Resume: Phase 07 Plans 01, 02, 03, and 04 complete — ready for Plan 05
 
 Config:
 {
