@@ -1,0 +1,59 @@
+version = 1
+revision = 3
+requires-python = ">=3.13"
+resolution-markers = [
+    "python_full_version >= '3.15'",
+    "python_full_version < '3.15'",
+]
+
+[manifest]
+members = [
+    "api",
+    "ingestion",
+    "lib-db",
+    "vibecheck",
+    "worker",
+]
+
+[[package]]
+name = "api"
+version = "0.1.0"
+source = { editable = "services/api" }
+dependencies = [
+    { name = "lib-db" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lib-db", editable = "lib/db" }]
+
+[[package]]
+name = "ingestion"
+version = "0.1.0"
+source = { editable = "services/ingestion" }
+dependencies = [
+    { name = "lib-db" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lib-db", editable = "lib/db" }]
+
+[[package]]
+name = "lib-db"
+version = "0.1.0"
+source = { editable = "lib/db" }
+
+[[package]]
+name = "vibecheck"
+version = "0.1.0"
+source = { virtual = "." }
+
+[[package]]
+name = "worker"
+version = "0.1.0"
+source = { editable = "services/worker" }
+dependencies = [
+    { name = "lib-db" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "lib-db", editable = "lib/db" }]
