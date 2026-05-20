@@ -1,0 +1,8 @@
+[scythe]
+version = "1"
+
+[[sql]]
+name = "main"
+engine = "postgresql"
+schema = ["sql/schema"]
+queries = ["sql/queries"]

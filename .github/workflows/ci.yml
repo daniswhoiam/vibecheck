@@ -1,0 +1,104 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: vibecheck
+          POSTGRES_PASSWORD: vibecheck
+          POSTGRES_DB: vibecheck
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vibecheck -d vibecheck"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      rabbitmq:
+        image: rabbitmq:management
+        env:
+          RABBITMQ_DEFAULT_USER: vibecheck
+          RABBITMQ_DEFAULT_PASS: vibecheck
+        ports:
+          - 5672:5672
+          - 15672:15672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 10
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: vibecheck
+      POSTGRES_PASSWORD: vibecheck
+      POSTGRES_DB: vibecheck
+      RABBITMQ_HOST: localhost
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: vibecheck
+      RABBITMQ_PASS: vibecheck
+      SCYTHE_VERSION: v0.6.13
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Sync dependencies
+        run: uv sync --all-groups
+
+      - name: Install scythe
+        run: |
+          set -euo pipefail
+          url="https://github.com/Goldziher/scythe/releases/download/${SCYTHE_VERSION}/scythe-x86_64-unknown-linux-gnu.tar.gz"
+          curl -fsSL "$url" -o /tmp/scythe.tar.gz
+          tar -xzf /tmp/scythe.tar.gz -C /tmp
+          sudo install -m 0755 /tmp/scythe /usr/local/bin/scythe
+          scythe --version
+
+      - name: Ruff check
+        run: uv run ruff check .
+
+      - name: Ruff format
+        run: uv run ruff format --check .
+
+      - name: Scythe lint
+        run: |
+          if find sql -name '*.sql' -print -quit | grep -q .; then
+            scythe lint
+          else
+            echo "No SQL files yet — skipping scythe lint."
+          fi
+
+      - name: Scythe fmt check
+        run: |
+          if find sql -name '*.sql' -print -quit | grep -q .; then
+            scythe fmt --check
+          else
+            echo "No SQL files yet — skipping scythe fmt check."
+          fi
+
+      - name: Mypy
+        run: uv run mypy .
+
+      - name: Pytest
+        run: uv run pytest
