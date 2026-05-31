@@ -3,7 +3,10 @@ name = "lib-db"
 version = "0.1.0"
 description = "Shared database layer for vibecheck services"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "psycopg[binary]>=3.2",
+    "psycopg-pool>=3.2",
+]
 
 [build-system]
 requires = ["hatchling"]
