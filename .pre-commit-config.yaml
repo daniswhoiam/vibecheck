@@ -11,11 +11,13 @@ repos:
       - id: scythe-fmt
         name: scythe fmt
         entry: scythe fmt
+        files: ^sql/queries/.*\.sql$
         language: system
         types: [sql]
       - id: scythe-lint
         name: scythe lint
         entry: scythe lint --fix
+        files: ^sql/queries/.*\.sql$
         language: system
         types: [sql]
       - id: mypy

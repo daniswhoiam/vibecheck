@@ -52,7 +52,8 @@ jobs:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: vibecheck
       RABBITMQ_PASS: vibecheck
-      SCYTHE_VERSION: v0.6.13
+      SCYTHE_VERSION: v0.8.0
+      DATABASE_URL: postgres://vibecheck:vibecheck@localhost:5432/vibecheck?sslmode=disable
 
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +65,7 @@ jobs:
           python-version: "3.13"
 
       - name: Sync dependencies
-        run: uv sync --all-groups
+        run: uv sync --all-packages --all-groups
 
       - name: Install scythe
         run: |
@@ -75,6 +76,20 @@ jobs:
           sudo install -m 0755 /tmp/scythe /usr/local/bin/scythe
           scythe --version
 
+      - name: Install pgschema
+        run: |
+          set -euo pipefail
+          sudo curl -fsSL -o /usr/local/bin/pgschema \
+            https://github.com/pgplex/pgschema/releases/download/v1.10.0/pgschema-1.10.0-linux-amd64
+          sudo chmod +x /usr/local/bin/pgschema
+          pgschema --help >/dev/null && echo "pgschema installed"
+
+      - name: Install squawk
+        run: npm install -g squawk-cli && squawk --version
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
       - name: Ruff check
         run: uv run ruff check .
 
@@ -82,23 +97,39 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Scythe lint
-        run: |
-          if find sql -name '*.sql' -print -quit | grep -q .; then
-            scythe lint
-          else
-            echo "No SQL files yet — skipping scythe lint."
-          fi
+        run: scythe lint sql/queries/*.sql
 
       - name: Scythe fmt check
+        run: scythe fmt --check sql/queries/*.sql
+
+      - name: Apply schema (pgschema)
+        run: DATABASE_URL="$DATABASE_URL" ./scripts/db-apply.sh --auto-approve
+
+      # Lints the migration the schema change would produce. After "Apply schema"
+      # the DB already matches sql/schema.sql, so the plan is empty here and squawk
+      # is skipped — the gate has real content only when planning against a DB that
+      # holds the prior schema (e.g. locally before applying, or a staging baseline).
+      - name: Squawk (plan safety)
         run: |
-          if find sql -name '*.sql' -print -quit | grep -q .; then
-            scythe fmt --check
+          set -euo pipefail
+          eval "$(./scripts/pg-env.sh)"
+          pgschema plan --schema public --file sql/schema.sql --output-sql /tmp/plan.sql
+          if [ -s /tmp/plan.sql ]; then
+            squawk /tmp/plan.sql
           else
-            echo "No SQL files yet — skipping scythe fmt check."
+            echo "Empty plan (DB already matches schema) — nothing to lint."
           fi
+
+      - name: Codegen freshness
+        run: |
+          ./scripts/codegen.sh
+          git diff --exit-code lib/db/lib_db/generated/
 
       - name: Mypy
         run: uv run mypy .
+
+      - name: Seed tools
+        run: psql "$DATABASE_URL" -f sql/seeds/tools.sql
 
       - name: Pytest
         run: uv run pytest
