@@ -45,4 +45,7 @@ CREATE TABLE analysis_results (
     analyzed_at   timestamptz      NOT NULL DEFAULT now(),
     UNIQUE NULLS NOT DISTINCT (mention_id, model_name, model_version)
 );
-CREATE INDEX idx_analysis_mention ON analysis_results (mention_id, model_name, analyzed_at DESC);
+-- No separate index on (mention_id, ...): the UNIQUE constraint above is backed
+-- by an index whose leading column is mention_id, which already serves the only
+-- access path in the current query surface (the join in GetSentimentByToolBucket).
+-- Re-add a tailored index here if a query starts ordering analyses by analyzed_at.
