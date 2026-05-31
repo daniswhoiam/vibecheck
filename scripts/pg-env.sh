@@ -15,11 +15,14 @@ import sys
 import urllib.parse as u
 
 p = u.urlparse(sys.argv[1])
+# urlparse does NOT percent-decode userinfo/path, so a valid URL-encoded
+# credential like p%40ss must be unquoted to p@ss before export. parse_qsl
+# already decodes query params, so PGSSLMODE needs no unquote.
 q = dict(u.parse_qsl(p.query))
-print(f'export PGHOST={shlex.quote(p.hostname or "localhost")}')
+print(f'export PGHOST={shlex.quote(u.unquote(p.hostname) if p.hostname else "localhost")}')
 print(f'export PGPORT={shlex.quote(str(p.port or 5432))}')
-print(f'export PGUSER={shlex.quote(p.username or "")}')
-print(f'export PGPASSWORD={shlex.quote(p.password or "")}')
-print(f'export PGDATABASE={shlex.quote((p.path or "/").lstrip("/"))}')
+print(f'export PGUSER={shlex.quote(u.unquote(p.username) if p.username else "")}')
+print(f'export PGPASSWORD={shlex.quote(u.unquote(p.password) if p.password else "")}')
+print(f'export PGDATABASE={shlex.quote(u.unquote((p.path or "/").lstrip("/")))}')
 print(f'export PGSSLMODE={shlex.quote(q.get("sslmode", "prefer"))}')
 PY

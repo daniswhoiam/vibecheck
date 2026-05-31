@@ -84,9 +84,6 @@ jobs:
           sudo chmod +x /usr/local/bin/pgschema
           pgschema --help >/dev/null && echo "pgschema installed"
 
-      - name: Install squawk
-        run: npm install -g squawk-cli && squawk --version
-
       - name: Install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
@@ -102,23 +99,23 @@ jobs:
       - name: Scythe fmt check
         run: scythe fmt --check sql/queries/*.sql
 
-      - name: Apply schema (pgschema)
-        run: DATABASE_URL="$DATABASE_URL" ./scripts/db-apply.sh --auto-approve
-
-      # Lints the migration the schema change would produce. After "Apply schema"
-      # the DB already matches sql/schema.sql, so the plan is empty here and squawk
-      # is skipped — the gate has real content only when planning against a DB that
-      # holds the prior schema (e.g. locally before applying, or a staging baseline).
-      - name: Squawk (plan safety)
+      # Validate sql/schema.sql as a pgschema desired-state and surface the diff
+      # against the fresh CI DB (full create). Non-mutating: it never applies and
+      # never auto-approves. We deliberately do NOT run `pgschema apply` here —
+      # applying needs --auto-approve in a non-TTY runner, and the destructive-DDL
+      # safeguard belongs to real deploys (db-apply.sh against a DB that holds
+      # data, reviewed, without --auto-approve), not to an empty ephemeral CI DB.
+      - name: Validate schema (pgschema plan)
         run: |
           set -euo pipefail
           eval "$(./scripts/pg-env.sh)"
-          pgschema plan --schema public --file sql/schema.sql --output-sql /tmp/plan.sql
-          if [ -s /tmp/plan.sql ]; then
-            squawk /tmp/plan.sql
-          else
-            echo "Empty plan (DB already matches schema) — nothing to lint."
-          fi
+          pgschema plan --schema public --file sql/schema.sql --output-human /tmp/plan.txt
+          cat /tmp/plan.txt
+
+      # Bootstrap the test database directly from the declarative schema (pure
+      # CREATE DDL), non-interactively — no pgschema/approval needed for an empty DB.
+      - name: Load schema for tests
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f sql/schema.sql
 
       - name: Codegen freshness
         run: |
@@ -129,7 +126,7 @@ jobs:
         run: uv run mypy .
 
       - name: Seed tools
-        run: psql "$DATABASE_URL" -f sql/seeds/tools.sql
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f sql/seeds/tools.sql
 
       - name: Pytest
         run: uv run pytest

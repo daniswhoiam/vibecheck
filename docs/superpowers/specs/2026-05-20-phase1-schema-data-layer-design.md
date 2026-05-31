@@ -147,12 +147,16 @@ case-folds before matching, so they are stored lowercase):
 - **pgschema** (v1.10.0) reconciles a live database to `sql/schema.sql` via a two-phase `plan` →
   `apply`. The helper `scripts/db-apply.sh` runs `pgschema apply`; it sources `scripts/pg-env.sh` to
   derive discrete `PG*` connection vars from `DATABASE_URL` (pgschema takes `PG*` vars, not a URL).
-- **squawk** lints the SQL emitted by `pgschema plan --output-sql` for unsafe-migration detection
-  (free; replaces the linting that Atlas moved behind Pro as of v0.38). **Known CI caveat:** the
-  schema is applied to a blank service DB first, so the subsequent plan is empty and squawk has
-  nothing to lint there. The gate has real content only when planning against a DB that holds the
-  prior schema (locally before applying, or a staging baseline). The CI step handles this gracefully:
-  if the plan file is empty it prints a notice and exits clean.
+- **Destructive-DDL safety is a deploy-time concern, not a CI gate** (revised 2026-05-31). squawk was
+  removed: it linted `pgschema plan --output-sql`, but in CI the schema is applied to a blank service
+  DB first, so the plan was always empty and squawk saw nothing — an inert gate. It is also a poor
+  fit for declarative pgschema (you don't author the DDL, so squawk's lock/rewrite lints are largely
+  inactionable; only its destructive-op detection is useful, and `pgschema plan` review already
+  surfaces that). The real safeguard lives at deploy time: `scripts/db-apply.sh` against a data-bearing
+  DB, with the plan reviewed and applied **without** `--auto-approve` (pgschema prompts for approval —
+  even with a pre-generated `--plan` — so a non-interactive apply requires `--auto-approve`, which we
+  reserve for the throwaway CI DB only). In CI, `pgschema plan` runs purely as a non-mutating
+  validation of `sql/schema.sql` and to surface the diff; it never applies.
 - **Rollback:** revert `sql/schema.sql` and re-apply; pgschema computes the reverse diff. The `plan`
   review step gates destructive diffs. Acceptable for greenfield.
 - **Atlas was rejected** despite its declarative `sql/schema`-as-source-of-truth alignment with
@@ -231,10 +235,10 @@ SQL change.
 | Stage | What runs | Why there |
 |---|---|---|
 | pre-commit | unchanged: `ruff`, `scythe fmt`, `scythe lint --fix`, `mypy` | Codegen is a deliberate manual/CI act; SQL authoring stays linted at commit time. |
-| CI — schema apply | `scripts/db-apply.sh --auto-approve` | Reconciles the service DB to `sql/schema.sql` before seed and pytest (replaces `dbmate up`). |
+| CI — schema load | `psql -v ON_ERROR_STOP=1 -f sql/schema.sql` | Bootstraps the empty, ephemeral CI DB directly from the declarative DDL before seed and pytest. No `pgschema apply` in CI (it needs `--auto-approve` non-interactively; the CI DB is throwaway). `ON_ERROR_STOP=1` so a mid-file SQL error fails the step. |
+| CI — schema validation | `pgschema plan --output-human` (non-mutating) | Validates `sql/schema.sql` as a pgschema desired-state and surfaces the diff. Never applies, never auto-approves. |
 | CI — codegen freshness gate | `./scripts/codegen.sh`, then `git diff --exit-code lib/db/lib_db/generated/` | Stale committed generated code cannot merge — this is what makes "commit the output" safe. |
-| CI — schema safety | `pgschema plan --output-sql` piped to `squawk`; skipped if plan is empty (see caveat above) | Squawk checks schema-change safety (orthogonal to scythe, which lints query SQL). A CI gate, not pre-commit, to keep commits fast. |
-| CI / local — seed | `psql -f sql/seeds/tools.sql` after pgschema apply | So smoke tests exercise queries (`ListTools`, the sentiment join) against realistic reference data. Kept out of `codegen.sh` — seeding is a data op, codegen is a build op; each script stays single-purpose. |
+| CI / local — seed | `psql -v ON_ERROR_STOP=1 -f sql/seeds/tools.sql` after schema load | So smoke tests exercise queries (`ListTools`, the sentiment join) against realistic reference data. Kept out of `codegen.sh` — seeding is a data op, codegen is a build op; each script stays single-purpose. |
 
 ## `lib/db` public API — Option A (thin layer + pool factory)
 
@@ -278,9 +282,9 @@ async def list_tools(conn = Depends(get_conn)):
 # Worker: one connection + transaction per message (atomic post+mention+analysis)
 async def handle_message(msg):
     async with pool.connection() as conn, conn.transaction():
-        post = await queries.insert_post(conn, ...)
-        await queries.insert_mention(conn, post_id=post.id, ...)
-        await queries.insert_analysis_result(conn, mention_id=..., ...)
+        post = await queries.create_post(conn, ...)
+        mention = await queries.create_mention(conn, post_id=post.id, ...)
+        await queries.create_analysis_result(conn, mention_id=mention.id, ...)
 ```
 
 Rejected alternatives: **B** (repository facade) — decoupling without a real transaction-boundary payoff,
@@ -290,21 +294,31 @@ if the worker's logic deepens.
 
 ## Initial query set (1.3)
 
-In `sql/queries/`, validated and round-tripped against live Postgres:
+In `sql/queries/`, validated and round-tripped against live Postgres — **six** generated functions
+(`create_*` per the lint verb-prefix convention; `Insert*` was renamed):
 
-- `InsertPost` (idempotent `ON CONFLICT (source, source_id) DO NOTHING`, jsonb metadata) — ingestion
-- `InsertAnalysisResult` (jsonb `raw_output`, nullable `model_version`) — worker
-- `GetSentimentByToolBucket` (3-table join, `date_trunc` day buckets, `avg`/`count`) — api
+- `CreatePost` (idempotent insert-or-get on `(source, source_id)`, jsonb metadata) — ingestion
+- `CreateMention` (idempotent insert-or-get on `(post_id, tool_id)`) — ingestion/worker
+- `CreateAnalysisResult` (idempotent insert-or-get on `(mention_id, model_name, model_version)`, jsonb `raw_output`, nullable `model_version`) — worker
+- `GetSentimentByToolBucket` (3-table join, `date_trunc` day buckets, `avg(score)::double precision`/`count`) — api
 - `ListTools` — api
 - `GetPostsByToolAndRange` (join, time range) — api
 
-(Per the lint convention, `Insert*` will likely be renamed `Create*`.)
+**Idempotent insert-or-get semantics:** the three `Create*` queries use `ON CONFLICT (<natural key>) DO
+UPDATE SET <a-key-col> = excluded.<same>` — a deliberate **no-op** convergent update. On conflict the row
+still counts as written so `RETURNING` emits the **existing** row (never `None`, never `UniqueViolation`),
+while no content/score/label/`analyzed_at` is overwritten — so an identical analysis rerun returns the
+stored verdict untouched. (`DO NOTHING` was rejected: its `RETURNING` is empty on conflict, losing the id
+callers need. A single-statement insert-or-select CTE was also rejected — scythe can't codegen
+data-modifying CTEs.)
 
 ## Verification (1.4)
 
 A pytest smoke test imports the generated module and exercises each query function against a test Postgres
-(from docker-compose) with seeded data. This is already proven manually in the spike: all five functions
-work, including jsonb adaptation, `text[] → list[str]`, nullable inference, and the aggregate join.
+(from docker-compose) with seeded data: a round-trip test plus a dedicated idempotency test
+(`test_idempotent_creates`) asserting that duplicate post/mention/analysis inputs return the existing row
+with original values preserved. All six functions work, including jsonb adaptation, `text[] → list[str]`,
+nullable inference, and the aggregate join.
 
 ## Validation
 

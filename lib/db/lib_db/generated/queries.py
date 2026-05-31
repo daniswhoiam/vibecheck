@@ -32,6 +32,8 @@ async def create_analysis_result(conn: AsyncConnection, *, mention_id: uuid.UUID
     mention_id, model_name, model_version, score, label, raw_output
 )
 VALUES (%(mention_id)s, %(model_name)s, %(model_version)s, %(score)s, %(label)s, %(raw_output)s)
+ON CONFLICT (mention_id, model_name, model_version) DO UPDATE SET model_name
+= excluded.model_name
 RETURNING
     id, mention_id, model_name, model_version, score, label, raw_output, analyzed_at""",
         {"mention_id": mention_id, "model_name": model_name, "model_version": model_version, "score": score, "label": label, "raw_output": raw_output},
@@ -58,7 +60,7 @@ class GetSentimentByToolBucketRow:
     tool_slug: str
     bucket: datetime.datetime
     n: int
-    avg_score: decimal.Decimal | None
+    avg_score: float | None
 
 
 async def get_sentiment_by_tool_bucket(conn: AsyncConnection, *, slug: str, published_at_1: datetime.datetime, published_at_2: datetime.datetime) -> list[GetSentimentByToolBucketRow]:
@@ -68,7 +70,7 @@ async def get_sentiment_by_tool_bucket(conn: AsyncConnection, *, slug: str, publ
     t.slug AS tool_slug,
     date_trunc('day', p.published_at) AS bucket,
     count(*) AS n,
-    avg(a.score) AS avg_score
+    avg(a.score)::double precision AS avg_score
 FROM analysis_results a
 JOIN mentions m ON m.id = a.mention_id
 JOIN posts p ON p.id = m.post_id
@@ -105,7 +107,7 @@ async def create_mention(conn: AsyncConnection, *, post_id: uuid.UUID, tool_id: 
     cur = await conn.execute(
         """INSERT INTO mentions (post_id, tool_id)
 VALUES (%(post_id)s, %(tool_id)s)
-ON CONFLICT (post_id, tool_id) DO NOTHING
+ON CONFLICT (post_id, tool_id) DO UPDATE SET tool_id = excluded.tool_id
 RETURNING id, post_id, tool_id, created_at""",
         {"post_id": post_id, "tool_id": tool_id},
     )
@@ -142,7 +144,7 @@ async def create_post(conn: AsyncConnection, *, source: str, source_id: str, con
     source, source_id, content, author, url, published_at, metadata
 )
 VALUES (%(source)s, %(source_id)s, %(content)s, %(author)s, %(url)s, %(published_at)s, %(metadata)s)
-ON CONFLICT (source, source_id) DO NOTHING
+ON CONFLICT (source, source_id) DO UPDATE SET source_id = excluded.source_id
 RETURNING
     id, source, source_id, content, author, url, published_at, metadata, created_at""",
         {"source": source, "source_id": source_id, "content": content, "author": author, "url": url, "published_at": published_at, "metadata": metadata},
