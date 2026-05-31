@@ -68,20 +68,28 @@ jobs:
         run: uv sync --all-packages --all-groups
 
       - name: Install scythe
+        env:
+          # sha256 of the v0.8.0 linux-gnu tarball; bump alongside SCYTHE_VERSION.
+          SCYTHE_SHA256: a578fdf1d63632417c84af19426b975588f144651ad72ce48d2786983daa253f
         run: |
           set -euo pipefail
           url="https://github.com/Goldziher/scythe/releases/download/${SCYTHE_VERSION}/scythe-x86_64-unknown-linux-gnu.tar.gz"
           curl -fsSL "$url" -o /tmp/scythe.tar.gz
+          echo "${SCYTHE_SHA256}  /tmp/scythe.tar.gz" | sha256sum -c -
           tar -xzf /tmp/scythe.tar.gz -C /tmp
           sudo install -m 0755 /tmp/scythe /usr/local/bin/scythe
           scythe --version
 
       - name: Install pgschema
+        env:
+          # sha256 of pgschema 1.10.0 linux-amd64; bump alongside the version.
+          PGSCHEMA_SHA256: eea28ba5f0817df04fb9cc5dc026d7d5f538417b18980f7117d47c2b08c98f48
         run: |
           set -euo pipefail
-          sudo curl -fsSL -o /usr/local/bin/pgschema \
+          curl -fsSL -o /tmp/pgschema \
             https://github.com/pgplex/pgschema/releases/download/v1.10.0/pgschema-1.10.0-linux-amd64
-          sudo chmod +x /usr/local/bin/pgschema
+          echo "${PGSCHEMA_SHA256}  /tmp/pgschema" | sha256sum -c -
+          sudo install -m 0755 /tmp/pgschema /usr/local/bin/pgschema
           pgschema --help >/dev/null && echo "pgschema installed"
 
       - name: Install psql client
@@ -120,7 +128,10 @@ jobs:
       - name: Codegen freshness
         run: |
           ./scripts/codegen.sh
-          git diff --exit-code lib/db/lib_db/generated/
+          git diff --exit-code -- lib/db/lib_db/generated/
+          # git diff misses untracked files, so a brand-new generated file would
+          # slip through; fail if the working tree has any change there at all.
+          test -z "$(git status --porcelain -- lib/db/lib_db/generated/)"
 
       - name: Mypy
         run: uv run mypy .
