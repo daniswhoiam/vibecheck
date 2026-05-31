@@ -173,7 +173,7 @@ Python must be selected explicitly.
 
 **The pipeline is 1 step, DB-free** (see [Validation](#validation)):
 
-```
+```text
 edit sql/schema.sql  →  scythe generate
 ```
 
