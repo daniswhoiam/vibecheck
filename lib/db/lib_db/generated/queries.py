@@ -68,7 +68,9 @@ async def get_sentiment_by_tool_bucket(conn: AsyncConnection, *, slug: str, publ
     cur = await conn.execute(
         """SELECT
     t.slug AS tool_slug,
-    date_trunc('day', p.published_at) AS bucket,
+    date_trunc(
+        'day', p.published_at AT TIME ZONE 'UTC'
+    ) AT TIME ZONE 'UTC' AS bucket,
     count(*) AS n,
     avg(a.score)::double precision AS avg_score
 FROM analysis_results a
@@ -76,7 +78,9 @@ JOIN mentions m ON m.id = a.mention_id
 JOIN posts p ON p.id = m.post_id
 JOIN tools t ON t.id = m.tool_id
 WHERE t.slug = %(slug)s AND p.published_at >= %(published_at_1)s AND p.published_at < %(published_at_2)s
-GROUP BY t.slug, date_trunc('day', p.published_at)
+GROUP BY
+    t.slug,
+    date_trunc('day', p.published_at AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
 ORDER BY bucket""",
         {"slug": slug, "published_at_1": published_at_1, "published_at_2": published_at_2},
     )
