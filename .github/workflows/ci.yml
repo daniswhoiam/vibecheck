@@ -52,7 +52,8 @@ jobs:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: vibecheck
       RABBITMQ_PASS: vibecheck
-      SCYTHE_VERSION: v0.6.13
+      SCYTHE_VERSION: v0.8.0
+      DATABASE_URL: postgres://vibecheck:vibecheck@localhost:5432/vibecheck?sslmode=disable
 
     steps:
       - uses: actions/checkout@v4
@@ -64,16 +65,35 @@ jobs:
           python-version: "3.13"
 
       - name: Sync dependencies
-        run: uv sync --all-groups
+        run: uv sync --all-packages --all-groups
 
       - name: Install scythe
+        env:
+          # sha256 of the v0.8.0 linux-gnu tarball; bump alongside SCYTHE_VERSION.
+          SCYTHE_SHA256: a578fdf1d63632417c84af19426b975588f144651ad72ce48d2786983daa253f
         run: |
           set -euo pipefail
           url="https://github.com/Goldziher/scythe/releases/download/${SCYTHE_VERSION}/scythe-x86_64-unknown-linux-gnu.tar.gz"
           curl -fsSL "$url" -o /tmp/scythe.tar.gz
+          echo "${SCYTHE_SHA256}  /tmp/scythe.tar.gz" | sha256sum -c -
           tar -xzf /tmp/scythe.tar.gz -C /tmp
           sudo install -m 0755 /tmp/scythe /usr/local/bin/scythe
           scythe --version
+
+      - name: Install pgschema
+        env:
+          # sha256 of pgschema 1.10.0 linux-amd64; bump alongside the version.
+          PGSCHEMA_SHA256: eea28ba5f0817df04fb9cc5dc026d7d5f538417b18980f7117d47c2b08c98f48
+        run: |
+          set -euo pipefail
+          curl -fsSL -o /tmp/pgschema \
+            https://github.com/pgplex/pgschema/releases/download/v1.10.0/pgschema-1.10.0-linux-amd64
+          echo "${PGSCHEMA_SHA256}  /tmp/pgschema" | sha256sum -c -
+          sudo install -m 0755 /tmp/pgschema /usr/local/bin/pgschema
+          pgschema --help >/dev/null && echo "pgschema installed"
+
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Ruff check
         run: uv run ruff check .
@@ -82,23 +102,42 @@ jobs:
         run: uv run ruff format --check .
 
       - name: Scythe lint
-        run: |
-          if find sql -name '*.sql' -print -quit | grep -q .; then
-            scythe lint
-          else
-            echo "No SQL files yet — skipping scythe lint."
-          fi
+        run: scythe lint sql/queries/*.sql
 
       - name: Scythe fmt check
+        run: scythe fmt --check sql/queries/*.sql
+
+      # Validate sql/schema.sql as a pgschema desired-state and surface the diff
+      # against the fresh CI DB (full create). Non-mutating: it never applies and
+      # never auto-approves. We deliberately do NOT run `pgschema apply` here —
+      # applying needs --auto-approve in a non-TTY runner, and the destructive-DDL
+      # safeguard belongs to real deploys (db-apply.sh against a DB that holds
+      # data, reviewed, without --auto-approve), not to an empty ephemeral CI DB.
+      - name: Validate schema (pgschema plan)
         run: |
-          if find sql -name '*.sql' -print -quit | grep -q .; then
-            scythe fmt --check
-          else
-            echo "No SQL files yet — skipping scythe fmt check."
-          fi
+          set -euo pipefail
+          eval "$(./scripts/pg-env.sh)"
+          pgschema plan --schema public --file sql/schema.sql --output-human /tmp/plan.txt
+          cat /tmp/plan.txt
+
+      # Bootstrap the test database directly from the declarative schema (pure
+      # CREATE DDL), non-interactively — no pgschema/approval needed for an empty DB.
+      - name: Load schema for tests
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f sql/schema.sql
+
+      - name: Codegen freshness
+        run: |
+          ./scripts/codegen.sh
+          git diff --exit-code -- lib/db/lib_db/generated/
+          # git diff misses untracked files, so a brand-new generated file would
+          # slip through; fail if the working tree has any change there at all.
+          test -z "$(git status --porcelain -- lib/db/lib_db/generated/)"
 
       - name: Mypy
         run: uv run mypy .
+
+      - name: Seed tools
+        run: psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f sql/seeds/tools.sql
 
       - name: Pytest
         run: uv run pytest

@@ -4,5 +4,9 @@ version = "1"
 [[sql]]
 name = "main"
 engine = "postgresql"
-schema = ["sql/schema"]
-queries = ["sql/queries"]
+schema = ["sql/schema.sql"]
+queries = ["sql/queries/*.sql"]
+
+[[sql.gen]]
+backend = "python-psycopg3"
+output = "lib/db/lib_db/generated"

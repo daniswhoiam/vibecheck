@@ -8,6 +8,7 @@ requires-python = ">=3.13"
 dev = [
     "mypy>=1.18",
     "pytest>=8",
+    "pytest-asyncio>=0.24",
     "ruff>=0.15",
 ]
 
@@ -22,7 +23,7 @@ members = [
 [tool.ruff]
 line-length = 100
 target-version = "py313"
-extend-exclude = [".venv", "frontend"]
+extend-exclude = [".venv", "frontend", "lib/db/lib_db/generated"]
 
 [tool.ruff.lint]
 select = [
@@ -47,7 +48,7 @@ python_version = "3.13"
 strict = true
 warn_unreachable = true
 warn_unused_ignores = true
-exclude = ["\\.venv", "frontend", "build", "dist"]
+exclude = ["\\.venv", "frontend", "build", "dist", "lib/db/lib_db/generated"]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
@@ -55,3 +56,4 @@ disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+asyncio_mode = "auto"
