@@ -37,6 +37,25 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    environment:
+      # Inside the compose network the DB host is the service name "postgres".
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-vibecheck}:${POSTGRES_PASSWORD:-vibecheck}@postgres:5432/${POSTGRES_DB:-vibecheck}?sslmode=disable}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:
   rabbitmq_data:

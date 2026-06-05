@@ -1,0 +1,14 @@
+# Keep the build context small and reproducible. The image builds the venv
+# from pyproject + uv.lock, so none of the local environment is needed.
+.venv/
+**/__pycache__/
+**/*.pyc
+.git/
+.github/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+frontend/
+docs/
+tests/
+*.md

@@ -6,6 +6,7 @@ requires-python = ">=3.13"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.27",
     "mypy>=1.18",
     "pytest>=8",
     "pytest-asyncio>=0.24",
@@ -57,3 +58,8 @@ disallow_untyped_defs = false
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = [
+    # Starlette's TestClient warns that httpx will be replaced by httpx2; we
+    # don't control that transitive choice. Scope the ignore to that one message.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
