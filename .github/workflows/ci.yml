@@ -133,6 +133,12 @@ jobs:
           # slip through; fail if the working tree has any change there at all.
           test -z "$(git status --porcelain -- lib/db/lib_db/generated/)"
 
+      - name: OpenAPI freshness
+        run: |
+          ./scripts/gen-openapi.sh
+          git diff --exit-code -- services/api/openapi.json
+          test -z "$(git status --porcelain -- services/api/openapi.json)"
+
       - name: Mypy
         run: uv run mypy .
 
