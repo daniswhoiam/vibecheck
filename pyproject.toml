@@ -38,7 +38,7 @@ select = [
     "SIM",    # flake8-simplify
     "RUF",    # ruff-specific
 ]
-ignore = []
+ignore = ["B008"]  # FastAPI Depends() in default args is intentional
 
 [tool.ruff.format]
 quote-style = "double"

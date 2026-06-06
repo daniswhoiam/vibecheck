@@ -13,6 +13,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from lib_db import create_pool
 
+from api.routes import router
+
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
     "postgres://vibecheck:vibecheck@127.0.0.1:5432/vibecheck?sslmode=disable",
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="Vibecheck API", lifespan=lifespan)
+app.include_router(router)
 
 
 @app.get("/health")
