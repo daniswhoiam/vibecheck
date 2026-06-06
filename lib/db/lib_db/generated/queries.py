@@ -63,13 +63,13 @@ class GetSentimentByToolBucketRow:
     avg_score: float | None
 
 
-async def get_sentiment_by_tool_bucket(conn: AsyncConnection, *, slug: str, published_at_1: datetime.datetime, published_at_2: datetime.datetime) -> list[GetSentimentByToolBucketRow]:
+async def get_sentiment_by_tool_bucket(conn: AsyncConnection, *, slug: str, published_at_1: datetime.datetime, published_at_2: datetime.datetime, p4: str) -> list[GetSentimentByToolBucketRow]:
     """Execute GetSentimentByToolBucket query."""
     cur = await conn.execute(
         """SELECT
     t.slug AS tool_slug,
     date_trunc(
-        'day', p.published_at AT TIME ZONE 'UTC'
+        %(p4)s::text, p.published_at AT TIME ZONE 'UTC'
     ) AT TIME ZONE 'UTC' AS bucket,
     count(*) AS n,
     avg(a.score)::double precision AS avg_score
@@ -80,9 +80,9 @@ JOIN tools t ON t.id = m.tool_id
 WHERE t.slug = %(slug)s AND p.published_at >= %(published_at_1)s AND p.published_at < %(published_at_2)s
 GROUP BY
     t.slug,
-    date_trunc('day', p.published_at AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+    date_trunc(%(p4)s::text, p.published_at AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
 ORDER BY bucket""",
-        {"slug": slug, "published_at_1": published_at_1, "published_at_2": published_at_2},
+        {"slug": slug, "published_at_1": published_at_1, "published_at_2": published_at_2, "p4": p4},
     )
     rows = await cur.fetchall()
     return [
@@ -251,4 +251,35 @@ ORDER BY slug""",
         )
         for r in rows
     ]
+
+
+@dataclass(frozen=True, slots=True)
+class GetToolBySlugRow:
+    """Row type for GetToolBySlug query."""
+
+    id: uuid.UUID
+    slug: str
+    display_name: str
+    aliases: list[str]
+    created_at: datetime.datetime
+
+
+async def get_tool_by_slug(conn: AsyncConnection, *, slug: str) -> GetToolBySlugRow | None:
+    """Execute GetToolBySlug query."""
+    cur = await conn.execute(
+        """SELECT id, slug, display_name, aliases, created_at
+FROM tools
+WHERE slug = %(slug)s""",
+        {"slug": slug},
+    )
+    row = await cur.fetchone()
+    if row is None:
+        return None
+    return GetToolBySlugRow(
+        id=row[0],
+        slug=row[1],
+        display_name=row[2],
+        aliases=row[3],
+        created_at=row[4],
+    )
 
