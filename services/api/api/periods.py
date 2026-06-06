@@ -1,34 +1,20 @@
-"""Pure parsing/validation for the sentiment endpoint's query params.
+"""Period parsing for the sentiment endpoint's window length.
 
-No HTTP, no DB — so it is unit-testable in isolation. Callers translate the
-ValueErrors raised here into HTTP 422 at the FastAPI boundary.
+The query-string format is enforced natively by ``PERIOD_PATTERN`` at the
+FastAPI boundary (yielding a standard 422), so this module only maps an
+already-validated period such as ``"30d"`` or ``"2w"`` onto a timedelta.
 """
 
 import datetime as dt
-import re
 
-BUCKETS = {"day", "week", "month"}
+# <positive int, 1-4 digits><d|w>. The leading [1-9] forbids zero and leading
+# zeros; the 4-digit cap keeps the resulting timedelta well in range (max
+# 9999 weeks), so it can never OverflowError on construction.
+PERIOD_PATTERN = r"^[1-9]\d{0,3}[dw]$"
 
-_PERIOD_RE = re.compile(r"^(\d+)([dw])$")
 _UNIT = {"d": "days", "w": "weeks"}
 
 
 def parse_period(period: str) -> dt.timedelta:
-    """Parse a window length like ``"30d"`` or ``"2w"`` into a timedelta.
-
-    Grammar: ``<positive int><d|w>``. Raises ValueError on anything else.
-    """
-    match = _PERIOD_RE.match(period)
-    if match is None:
-        raise ValueError(f"invalid period: {period!r} (expected e.g. '30d' or '2w')")
-    value = int(match.group(1))
-    if value <= 0:
-        raise ValueError(f"invalid period: {period!r} (must be positive)")
-    return dt.timedelta(**{_UNIT[match.group(2)]: value})
-
-
-def validate_bucket(bucket: str) -> str:
-    """Return ``bucket`` if it is a supported granularity, else raise ValueError."""
-    if bucket not in BUCKETS:
-        raise ValueError(f"invalid bucket: {bucket!r} (expected one of {sorted(BUCKETS)})")
-    return bucket
+    """Map a ``PERIOD_PATTERN``-valid period string onto a timedelta."""
+    return dt.timedelta(**{_UNIT[period[-1]]: int(period[:-1])})

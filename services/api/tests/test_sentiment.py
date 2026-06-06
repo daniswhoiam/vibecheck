@@ -1,6 +1,15 @@
 import datetime as dt
 
 import pytest
+from api.main import app
+from httpx import ASGITransport, AsyncClient
+
+
+class _PoisonPool:
+    """A pool whose connection() must never be reached."""
+
+    def connection(self):
+        raise AssertionError("DB connection acquired before request validation passed")
 
 
 async def test_sentiment_week_buckets_are_weighted(client, seeded) -> None:
@@ -44,10 +53,33 @@ async def test_sentiment_unknown_tool_404(client) -> None:
 async def test_sentiment_invalid_period_422(client) -> None:
     response = await client.get("/api/v1/sentiment/any-tool", params={"period": "invalid"})
     assert response.status_code == 422
+    # The committed OpenAPI advertises HTTPValidationError ({"detail": [...]}) for
+    # 422; the runtime body must match so generated clients parse it correctly.
+    assert isinstance(response.json()["detail"], list)
 
 
 async def test_sentiment_invalid_bucket_422(client) -> None:
     response = await client.get("/api/v1/sentiment/any-tool", params={"bucket": "fortnight"})
+    assert response.status_code == 422
+
+
+async def test_invalid_params_do_not_touch_the_pool() -> None:
+    # Malformed query params must 422 without acquiring a DB connection, so a bad
+    # request can neither consume the pool nor surface a 500 when it is exhausted.
+    app.state.pool = _PoisonPool()
+    transport = ASGITransport(app=app)
+    try:
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            response = await c.get("/api/v1/sentiment/any-tool", params={"period": "invalid"})
+        assert response.status_code == 422
+    finally:
+        del app.state.pool
+
+
+async def test_sentiment_oversized_period_422(client) -> None:
+    # A digit string large enough to OverflowError timedelta must be rejected at
+    # validation (422), not escape as a 500.
+    response = await client.get("/api/v1/sentiment/any-tool", params={"period": "99999999999d"})
     assert response.status_code == 422
 
 
