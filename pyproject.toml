@@ -49,17 +49,9 @@ python_version = "3.13"
 strict = true
 warn_unreachable = true
 warn_unused_ignores = true
-exclude = ["\\.venv", "frontend", "build", "dist", "lib/db/lib_db/generated"]
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
+exclude = ["\\.venv", "frontend", "build", "dist", "lib/db/lib_db/generated", "lib/db/tests", "services/api/tests"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["lib/db/tests", "services/api/tests"]
+addopts = "--import-mode=importlib"
 asyncio_mode = "auto"
-filterwarnings = [
-    # Starlette's TestClient warns that httpx will be replaced by httpx2; we
-    # don't control that transitive choice. Scope the ignore to that one message.
-    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
-]
