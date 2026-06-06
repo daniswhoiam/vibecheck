@@ -10,6 +10,16 @@
 
 ---
 
+## Course correction (2026-06-06): Option 2 → Option 1
+
+During Task 2 we found Scythe 0.8.0 cannot name a `date_trunc` positional param — it becomes `p4`, with no working rename mechanism (see memory `scythe-param-naming-gotcha`). That makes Option 2 (SQL-parameterized bucket) require a hand-maintained `p4`→`bucket` shim that diverges `lib_db`'s public API from its generated API. We switched to **Option 1**: the sentiment SQL query stays **day-only** (frozen, as in Task 1), and the API does the **weighted day→week/month roll-up** in a pure, tested function. The tasks below are amended as follows (where they conflict, this note wins):
+
+- **Task 2** — Do NOT parameterize the sentiment query; do NOT add a shim. Only add the `GetToolBySlug` query (Step 4) + its data-layer test. `get_sentiment_by_tool_bucket` keeps its Task 1 signature (`slug, published_at_1, published_at_2`, day bucket). Smoke test: keep the original roundtrip call (no `bucket` arg) and add `test_get_tool_by_slug`. (The week-bucket data-layer test in Step 1 is dropped — week bucketing is now an API concern.)
+- **Task 3** — Also add a pure `services/api/api/aggregate.py` with `truncate_to(day_start, granularity)` (day→same, week→ISO Monday, month→first of month) and `fold_buckets(day_rows, granularity)` doing the weighted roll-up `avg = Σ(nᵢ·avgᵢ)/Σnᵢ`, with unit tests including the unequal-count week (weighted ≠ mean-of-means). `validate_bucket`/`parse_period` stay in `periods.py`.
+- **Task 7** — The endpoint calls the **day-bucket** query over the window, then `fold_buckets(rows, window.bucket)` to build the series. `resolve_window` and all six test cases + expected values are unchanged (the fold reproduces the same day/week buckets).
+
+---
+
 ## Reference: spec
 
 `docs/superpowers/specs/2026-06-06-phase2-api-service-design.md`. Read it before starting.

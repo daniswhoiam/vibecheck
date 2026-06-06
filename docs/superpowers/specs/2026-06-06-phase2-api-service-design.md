@@ -4,6 +4,8 @@
 **Branch:** `phase-2-api-service`
 **Status:** Design settled in brainstorming; awaiting spec review before planning.
 
+> **Course correction (2026-06-06, during execution):** The "Aggregation decision" below chose **Option 2** (parameterize the bucket in SQL). Execution revealed Scythe 0.8.0 cannot name a `date_trunc` positional param (it becomes `p4`, with no rename mechanism — see memory `scythe-param-naming-gotcha`), which would force a hand-maintained shim diverging `lib_db`'s public API. We therefore switched to **Option 1**: the sentiment query stays day-only, and the API performs the **weighted day→week/month roll-up** in a pure, unit-tested `aggregate.fold_buckets` (`avg = Σ(nᵢ·avgᵢ)/Σnᵢ`). The "Aggregation decision" and "Data layer changes" sections are superseded accordingly; `GetToolBySlug` is still added.
+
 ## Goal
 
 Stand up the FastAPI service that serves **dashboard data** from the `lib_db`
