@@ -51,7 +51,7 @@ async def test_data_layer_roundtrip(conn):
         end = dt.datetime(2026, 5, 2, tzinfo=dt.UTC)
 
         buckets = await queries.get_sentiment_by_tool_bucket(
-            conn, slug=slug, bucket="day", published_at_1=start, published_at_2=end
+            conn, slug=slug, published_at_1=start, published_at_2=end
         )
         assert len(buckets) == 1
         assert buckets[0].tool_slug == slug
@@ -156,61 +156,6 @@ async def test_idempotent_creates(conn):
         assert a2.analyzed_at == a1.analyzed_at
     finally:
         await conn.execute("DELETE FROM posts WHERE source_id = %s", (source_id,))
-        await conn.execute("DELETE FROM tools WHERE id = %s", (tool_id,))
-
-
-async def test_sentiment_week_bucket_is_weighted(conn):
-    """Two posts (0.9, 0.7) on one day + one post (0.3) on another day in the
-    SAME ISO week must average to the weighted mean over all 3 rows
-    (1.9/3 ≈ 0.6333), NOT the mean-of-day-means (0.55)."""
-    suffix = uuid.uuid4().hex[:8]
-    slug = f"weektool-{suffix}"
-    cur = await conn.execute(
-        "INSERT INTO tools (slug, display_name) VALUES (%s, %s) RETURNING id",
-        (slug, "Week Tool"),
-    )
-    row = await cur.fetchone()
-    assert row is not None
-    tool_id = row[0]
-    try:
-        # 2026-05-18 is a Monday; 05-18 and 05-20 are the same ISO week.
-        for i, (day, score) in enumerate([(18, 0.9), (18, 0.7), (20, 0.3)]):
-            post = await queries.create_post(
-                conn,
-                source=f"wk-{suffix}",
-                source_id=f"wk-{suffix}-{i}",
-                content="x",
-                author=None,
-                url=None,
-                published_at=dt.datetime(2026, 5, day, 12, tzinfo=dt.UTC),
-                metadata={},
-            )
-            assert post is not None
-            mention = await queries.create_mention(conn, post_id=post.id, tool_id=tool_id)
-            assert mention is not None
-            res = await queries.create_analysis_result(
-                conn,
-                mention_id=mention.id,
-                model_name="test-model",
-                model_version=None,
-                score=score,
-                label="positive",
-                raw_output=None,
-            )
-            assert res is not None
-
-        start = dt.datetime(2026, 5, 1, tzinfo=dt.UTC)
-        end = dt.datetime(2026, 6, 1, tzinfo=dt.UTC)
-        buckets = await queries.get_sentiment_by_tool_bucket(
-            conn, slug=slug, bucket="week", published_at_1=start, published_at_2=end
-        )
-        assert len(buckets) == 1
-        assert buckets[0].n == 3
-        avg = buckets[0].avg_score
-        assert avg is not None
-        assert float(avg) == pytest.approx(1.9 / 3)
-    finally:
-        await conn.execute("DELETE FROM posts WHERE source = %s", (f"wk-{suffix}",))
         await conn.execute("DELETE FROM tools WHERE id = %s", (tool_id,))
 
 

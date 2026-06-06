@@ -15,7 +15,6 @@ RETURNING
 
 -- @name GetSentimentByToolBucket
 -- @returns many
--- @param bucket text
 -- Bucket in UTC explicitly: date_trunc on a timestamptz otherwise truncates in
 -- the session TimeZone, so the same post could land in different daily buckets
 -- across local/CI/prod. Converting to UTC and back keeps the bucket a
@@ -23,7 +22,7 @@ RETURNING
 SELECT
     t.slug AS tool_slug,
     date_trunc(
-        $4::text, p.published_at AT TIME ZONE 'UTC'
+        'day', p.published_at AT TIME ZONE 'UTC'
     ) AT TIME ZONE 'UTC' AS bucket,
     count(*) AS n,
     avg(a.score)::double precision AS avg_score
@@ -34,5 +33,5 @@ JOIN tools t ON t.id = m.tool_id
 WHERE t.slug = $1 AND p.published_at >= $2 AND p.published_at < $3
 GROUP BY
     t.slug,
-    date_trunc($4::text, p.published_at AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+    date_trunc('day', p.published_at AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
 ORDER BY bucket;
