@@ -22,7 +22,11 @@ async def list_tools(
     return [Tool(slug=r.slug, display_name=r.display_name, aliases=r.aliases) for r in rows]
 
 
-@router.get("/sentiment/{tool}", response_model=SentimentSeries)
+@router.get(
+    "/sentiment/{tool}",
+    response_model=SentimentSeries,
+    responses={404: {"description": "Tool not found"}},
+)
 async def tool_sentiment(
     tool: str,
     window: ResolvedWindow = Depends(resolve_window),
