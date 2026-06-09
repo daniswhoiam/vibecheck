@@ -23,5 +23,11 @@ RUN uv sync --frozen --package api --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
+# Drop privileges: run uvicorn as a dedicated unprivileged user to limit blast
+# radius if the process is compromised. Port 8000 is unprivileged, so no caps.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 EXPOSE 8000
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

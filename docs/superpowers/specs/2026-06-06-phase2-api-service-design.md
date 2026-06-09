@@ -72,7 +72,7 @@ Time-bucketed average sentiment for one tool. Query params:
 
 | Param | Default | Validation |
 |---|---|---|
-| `period` | `30d` | `^\d+[dw]$` (days or weeks). Invalid → 422. |
+| `period` | `30d` | `^[1-9]\d{0,3}[dw]$` (1–9999 days or weeks). Invalid/zero/out-of-range → 422. |
 | `bucket` | `day` | one of `day` \| `week` \| `month`. Invalid → 422. |
 
 ```
@@ -216,7 +216,7 @@ same-named-file collisions across packages and drops `__init__.py` boilerplate),
 
 ## OpenAPI (2.4)
 
-- A regen script (`scripts/openapi.sh` or a small `python -m` entry) does
+- A regen script (`scripts/gen-openapi.sh`) does
   `from api.main import app; json.dump(app.openapi(), …)` → committed
   **`services/api/openapi.json`** (JSON, not YAML — `app.openapi()` is a dict,
   no extra dep, and TS tooling consumes JSON).
@@ -241,7 +241,7 @@ ingestion/worker logic.
 
 ## Decisions made while writing — please confirm in review
 
-1. **`period` grammar:** `^\d+[dw]$` (days/weeks), default `30d`. Months are a
+1. **`period` grammar:** `^[1-9]\d{0,3}[dw]$` (1–9999 days/weeks), default `30d`. Months are a
    *bucket* granularity (calendar-aligned via `date_trunc`) but not a *window*
    unit, to avoid the variable-length-month ambiguity in window math. Add `mo`
    for period later if needed.
