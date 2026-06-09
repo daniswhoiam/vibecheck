@@ -6,6 +6,7 @@ requires-python = ">=3.13"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.27",
     "mypy>=1.18",
     "pytest>=8",
     "pytest-asyncio>=0.24",
@@ -37,7 +38,7 @@ select = [
     "SIM",    # flake8-simplify
     "RUF",    # ruff-specific
 ]
-ignore = []
+ignore = ["B008"]  # FastAPI Depends() in default args is intentional
 
 [tool.ruff.format]
 quote-style = "double"
@@ -48,12 +49,9 @@ python_version = "3.13"
 strict = true
 warn_unreachable = true
 warn_unused_ignores = true
-exclude = ["\\.venv", "frontend", "build", "dist", "lib/db/lib_db/generated"]
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
+exclude = ["\\.venv", "frontend", "build", "dist", "lib/db/lib_db/generated", "lib/db/tests", "services/api/tests"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["lib/db/tests", "services/api/tests"]
+addopts = "--import-mode=importlib"
 asyncio_mode = "auto"

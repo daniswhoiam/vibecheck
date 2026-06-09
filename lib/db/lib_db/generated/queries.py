@@ -252,3 +252,34 @@ ORDER BY slug""",
         for r in rows
     ]
 
+
+@dataclass(frozen=True, slots=True)
+class GetToolBySlugRow:
+    """Row type for GetToolBySlug query."""
+
+    id: uuid.UUID
+    slug: str
+    display_name: str
+    aliases: list[str]
+    created_at: datetime.datetime
+
+
+async def get_tool_by_slug(conn: AsyncConnection, *, slug: str) -> GetToolBySlugRow | None:
+    """Execute GetToolBySlug query."""
+    cur = await conn.execute(
+        """SELECT id, slug, display_name, aliases, created_at
+FROM tools
+WHERE slug = %(slug)s""",
+        {"slug": slug},
+    )
+    row = await cur.fetchone()
+    if row is None:
+        return None
+    return GetToolBySlugRow(
+        id=row[0],
+        slug=row[1],
+        display_name=row[2],
+        aliases=row[3],
+        created_at=row[4],
+    )
+

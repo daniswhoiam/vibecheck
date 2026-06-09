@@ -1,23 +1,8 @@
 import datetime as dt
-import os
 import uuid
 
 import pytest
-from lib_db import create_pool, queries
-
-DSN = os.environ.get(
-    "DATABASE_URL",
-    "postgres://vibecheck:vibecheck@127.0.0.1:5432/vibecheck?sslmode=disable",
-)
-
-
-@pytest.fixture
-async def conn():
-    pool = create_pool(DSN)
-    await pool.open()
-    async with pool.connection() as c:
-        yield c
-    await pool.close()
+from lib_db import queries
 
 
 async def test_data_layer_roundtrip(conn):
@@ -171,4 +156,24 @@ async def test_idempotent_creates(conn):
         assert a2.analyzed_at == a1.analyzed_at
     finally:
         await conn.execute("DELETE FROM posts WHERE source_id = %s", (source_id,))
+        await conn.execute("DELETE FROM tools WHERE id = %s", (tool_id,))
+
+
+async def test_get_tool_by_slug(conn):
+    suffix = uuid.uuid4().hex[:8]
+    slug = f"slugtool-{suffix}"
+    cur = await conn.execute(
+        "INSERT INTO tools (slug, display_name) VALUES (%s, %s) RETURNING id",
+        (slug, "Slug Tool"),
+    )
+    row = await cur.fetchone()
+    assert row is not None
+    tool_id = row[0]
+    try:
+        found = await queries.get_tool_by_slug(conn, slug=slug)
+        assert found is not None
+        assert found.slug == slug
+        missing = await queries.get_tool_by_slug(conn, slug="does-not-exist-xyz")
+        assert missing is None
+    finally:
         await conn.execute("DELETE FROM tools WHERE id = %s", (tool_id,))
