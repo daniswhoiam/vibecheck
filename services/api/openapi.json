@@ -57,6 +57,7 @@
             "items": {
               "$ref": "#/components/schemas/SentimentPoint"
             },
+            "maxItems": 10000,
             "title": "Series",
             "type": "array"
           },
@@ -87,6 +88,7 @@
             "items": {
               "type": "string"
             },
+            "maxItems": 100,
             "title": "Aliases",
             "type": "array"
           },
@@ -220,6 +222,7 @@
             "description": "Validation Error"
           }
         },
+        "security": [],
         "summary": "Tool Sentiment"
       }
     },
@@ -234,6 +237,7 @@
                   "items": {
                     "$ref": "#/components/schemas/Tool"
                   },
+                  "maxItems": 1000,
                   "title": "Response List Tools Api V1 Tools Get",
                   "type": "array"
                 }
@@ -242,6 +246,7 @@
             "description": "Successful Response"
           }
         },
+        "security": [],
         "summary": "List Tools"
       }
     },
@@ -265,6 +270,7 @@
             "description": "Successful Response"
           }
         },
+        "security": [],
         "summary": "Health"
       }
     }
