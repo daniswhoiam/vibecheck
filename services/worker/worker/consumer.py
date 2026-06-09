@@ -30,16 +30,26 @@ _DEAD_ROUTING_KEY = "dead"
 TRANSIENT_RETRY_DELAY = 5.0
 
 
-async def declare_topology(channel: AbstractChannel) -> tuple[AbstractQueue, AbstractQueue]:
-    """Declare queue + dead-letter exchange/queue. Idempotent; safe anywhere."""
-    dlx = await channel.declare_exchange(DLX_NAME, aio_pika.ExchangeType.DIRECT, durable=True)
-    dead_queue = await channel.declare_queue(DEAD_QUEUE_NAME, durable=True)
+async def declare_topology(
+    channel: AbstractChannel,
+    *,
+    queue_name: str = QUEUE_NAME,
+    dlx_name: str = DLX_NAME,
+    dead_queue_name: str = DEAD_QUEUE_NAME,
+) -> tuple[AbstractQueue, AbstractQueue]:
+    """Declare queue + dead-letter exchange/queue. Idempotent; safe anywhere.
+
+    Names are parameterized so tests can use throwaway queues that never
+    collide with a worker consuming the production names on the same broker.
+    """
+    dlx = await channel.declare_exchange(dlx_name, aio_pika.ExchangeType.DIRECT, durable=True)
+    dead_queue = await channel.declare_queue(dead_queue_name, durable=True)
     await dead_queue.bind(dlx, routing_key=_DEAD_ROUTING_KEY)
     queue = await channel.declare_queue(
-        QUEUE_NAME,
+        queue_name,
         durable=True,
         arguments={
-            "x-dead-letter-exchange": DLX_NAME,
+            "x-dead-letter-exchange": dlx_name,
             "x-dead-letter-routing-key": _DEAD_ROUTING_KEY,
         },
     )
@@ -67,7 +77,15 @@ async def handle_message(
         logger.info("processed message from %s", message.routing_key)
 
 
-async def run_consumer(amqp_url: str, dsn: str, analyzer: Analyzer) -> None:
+async def run_consumer(
+    amqp_url: str,
+    dsn: str,
+    analyzer: Analyzer,
+    *,
+    queue_name: str = QUEUE_NAME,
+    dlx_name: str = DLX_NAME,
+    dead_queue_name: str = DEAD_QUEUE_NAME,
+) -> None:
     """Consume until cancelled. Owns the DB pool and AMQP connection."""
     pool = create_pool(dsn)
     await pool.open()
@@ -78,8 +96,13 @@ async def run_consumer(amqp_url: str, dsn: str, analyzer: Analyzer) -> None:
             # One unacked message at a time: inference is CPU-bound, so there
             # is nothing to gain from buffering work in the consumer.
             await channel.set_qos(prefetch_count=1)
-            queue, _ = await declare_topology(channel)
-            logger.info("consuming from %s", QUEUE_NAME)
+            queue, _ = await declare_topology(
+                channel,
+                queue_name=queue_name,
+                dlx_name=dlx_name,
+                dead_queue_name=dead_queue_name,
+            )
+            logger.info("consuming from %s", queue_name)
             async with queue.iterator() as messages:
                 async for message in messages:
                     await handle_message(message, pool, analyzer)

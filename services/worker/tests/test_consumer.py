@@ -1,23 +1,32 @@
 """End-to-end consumer tests: real RabbitMQ in, real Postgres out.
 
-Each test runs the consumer as a background task with the stub analyzer,
-publishes to the real queue, and polls for the observable outcome (a DB row or
-a dead-lettered message). Queues are purged between tests for isolation.
+Each test runs the consumer as a background task with the stub analyzer over a
+throwaway, uniquely-named topology - a deployed worker may be consuming the
+production queue on the same broker, and it must never steal test messages.
+Tests poll for the observable outcome (a DB row or a dead-lettered message).
 """
 
 import asyncio
 import contextlib
+import dataclasses
 import json
 import os
 import uuid
 
 import aio_pika
 import pytest
-from worker.consumer import DEAD_QUEUE_NAME, QUEUE_NAME, declare_topology, run_consumer
+from worker.consumer import declare_topology, run_consumer
 
 from .conftest import DSN, StubAnalyzer
 
 AMQP_URL = os.environ.get("AMQP_URL", "amqp://vibecheck:vibecheck@127.0.0.1:5672/")
+
+
+@dataclasses.dataclass(frozen=True)
+class Topology:
+    queue: str
+    dlx: str
+    dead_queue: str
 
 
 def make_payload(seed) -> dict:
@@ -34,29 +43,50 @@ def make_payload(seed) -> dict:
 
 
 @pytest.fixture
-async def amqp():
+def topology() -> Topology:
+    name = f"test.posts.{uuid.uuid4().hex[:8]}"
+    return Topology(queue=name, dlx=f"{name}.dlx", dead_queue=f"{name}.dead")
+
+
+@pytest.fixture
+async def amqp(topology):
     connection = await aio_pika.connect(AMQP_URL)
     channel = await connection.channel()
-    queue, dead_queue = await declare_topology(channel)
-    await queue.purge()
-    await dead_queue.purge()
+    await declare_topology(
+        channel,
+        queue_name=topology.queue,
+        dlx_name=topology.dlx,
+        dead_queue_name=topology.dead_queue,
+    )
     yield channel
+    await channel.queue_delete(topology.queue)
+    await channel.queue_delete(topology.dead_queue)
+    await channel.exchange_delete(topology.dlx)
     await connection.close()
 
 
 @pytest.fixture
-async def consumer():
-    task = asyncio.create_task(run_consumer(AMQP_URL, DSN, StubAnalyzer()))
+async def consumer(topology):
+    task = asyncio.create_task(
+        run_consumer(
+            AMQP_URL,
+            DSN,
+            StubAnalyzer(),
+            queue_name=topology.queue,
+            dlx_name=topology.dlx,
+            dead_queue_name=topology.dead_queue,
+        )
+    )
     yield task
     task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await task
 
 
-async def publish(channel, body: bytes) -> None:
+async def publish(channel, topology: Topology, body: bytes) -> None:
     await channel.default_exchange.publish(
         aio_pika.Message(body=body, delivery_mode=aio_pika.DeliveryMode.PERSISTENT),
-        routing_key=QUEUE_NAME,
+        routing_key=topology.queue,
     )
 
 
@@ -69,8 +99,8 @@ async def poll(predicate, timeout: float = 15.0):
             await asyncio.sleep(0.1)
 
 
-async def test_published_message_lands_in_postgres(db_pool, seed, amqp, consumer) -> None:
-    await publish(amqp, json.dumps(make_payload(seed)).encode())
+async def test_published_message_lands_in_postgres(db_pool, seed, topology, amqp, consumer) -> None:
+    await publish(amqp, topology, json.dumps(make_payload(seed)).encode())
 
     async def find_row():
         async with db_pool.connection() as conn:
@@ -90,12 +120,12 @@ async def test_published_message_lands_in_postgres(db_pool, seed, amqp, consumer
     assert row == (0.9, "positive", "stub-model")
 
 
-async def test_malformed_message_goes_to_dead_letter_queue(amqp, consumer) -> None:
+async def test_malformed_message_goes_to_dead_letter_queue(topology, amqp, consumer) -> None:
     marker = uuid.uuid4().hex
-    await publish(amqp, f"not json {marker}".encode())
+    await publish(amqp, topology, f"not json {marker}".encode())
 
     async def find_dead():
-        msg = await (await amqp.get_queue(DEAD_QUEUE_NAME)).get(fail=False)
+        msg = await (await amqp.get_queue(topology.dead_queue)).get(fail=False)
         if msg is not None:
             await msg.ack()
         return msg
@@ -104,12 +134,14 @@ async def test_malformed_message_goes_to_dead_letter_queue(amqp, consumer) -> No
     assert marker in dead.body.decode()
 
 
-async def test_unknown_tool_goes_to_dead_letter_queue(db_pool, seed, amqp, consumer) -> None:
+async def test_unknown_tool_goes_to_dead_letter_queue(
+    db_pool, seed, topology, amqp, consumer
+) -> None:
     payload = {**make_payload(seed), "tools": ["no-such-tool"]}
-    await publish(amqp, json.dumps(payload).encode())
+    await publish(amqp, topology, json.dumps(payload).encode())
 
     async def find_dead():
-        msg = await (await amqp.get_queue(DEAD_QUEUE_NAME)).get(fail=False)
+        msg = await (await amqp.get_queue(topology.dead_queue)).get(fail=False)
         if msg is not None:
             await msg.ack()
         return msg
