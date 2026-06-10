@@ -170,6 +170,27 @@ RETURNING
 
 
 @dataclass(frozen=True, slots=True)
+class GetPostIdBySourceRow:
+    """Row type for GetPostIdBySource query."""
+
+    id: uuid.UUID
+
+
+async def get_post_id_by_source(conn: AsyncConnection, *, source: str, source_id: str) -> GetPostIdBySourceRow | None:
+    """Execute GetPostIdBySource query."""
+    cur = await conn.execute(
+        """SELECT id
+FROM posts
+WHERE source = %(source)s AND source_id = %(source_id)s""",
+        {"source": source, "source_id": source_id},
+    )
+    row = await cur.fetchone()
+    if row is None:
+        return None
+    return GetPostIdBySourceRow(id=row[0])
+
+
+@dataclass(frozen=True, slots=True)
 class GetPostsByToolAndRangeRow:
     """Row type for GetPostsByToolAndRange query."""
 

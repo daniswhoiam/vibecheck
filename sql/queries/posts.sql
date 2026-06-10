@@ -12,6 +12,14 @@ ON CONFLICT (source, source_id) DO UPDATE SET source_id = excluded.source_id
 RETURNING
     id, source, source_id, content, author, url, published_at, metadata, created_at;
 
+-- @name GetPostIdBySource
+-- @returns one
+-- Ingestion dedup: skip re-publishing posts already processed. Advisory
+-- only — the worker's idempotent inserts remain the correctness layer.
+SELECT id
+FROM posts
+WHERE source = $1 AND source_id = $2;
+
 -- @name GetPostsByToolAndRange
 -- @returns many
 SELECT

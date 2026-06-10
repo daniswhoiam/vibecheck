@@ -69,6 +69,25 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  ingestion:
+    build:
+      context: .
+      dockerfile: services/ingestion/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://${POSTGRES_USER:-vibecheck}:${POSTGRES_PASSWORD:-vibecheck}@postgres:5432/${POSTGRES_DB:-vibecheck}?sslmode=disable}
+      AMQP_URL: ${AMQP_URL:-amqp://${RABBITMQ_DEFAULT_USER:-vibecheck}:${RABBITMQ_DEFAULT_PASS:-vibecheck}@rabbitmq:5672/}
+      INGEST_INTERVAL_SECONDS: ${INGEST_INTERVAL_SECONDS:-300}
+      INGEST_LOOKBACK_SECONDS: ${INGEST_LOOKBACK_SECONDS:-3600}
+      # Unset locally -> Reddit fetcher disabled, HN-only (by design).
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID:-}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET:-}
+      REDDIT_USER_AGENT: ${REDDIT_USER_AGENT:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   rabbitmq_data:
