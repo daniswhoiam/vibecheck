@@ -67,6 +67,14 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-packages --all-groups
 
+      # The worker's sentiment tests load the real model; cache the snapshot
+      # so CI does not re-download ~500MB every run.
+      - name: Cache Hugging Face model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-cardiffnlp-twitter-roberta-base-sentiment-latest
+
       - name: Install scythe
         env:
           # sha256 of the v0.8.0 linux-gnu tarball; bump alongside SCYTHE_VERSION.

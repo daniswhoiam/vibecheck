@@ -5,6 +5,10 @@ description = "Vibecheck worker service"
 requires-python = ">=3.13"
 dependencies = [
     "lib-db",
+    "aio-pika>=9.5",
+    "psycopg[binary]>=3.2",
+    "torch>=2.6",
+    "transformers>=4.48",
 ]
 
 [build-system]
@@ -16,3 +20,11 @@ packages = ["worker"]
 
 [tool.uv.sources]
 lib-db = { workspace = true }
+# CPU-only torch on Linux (Docker/CI): default PyPI wheels bundle CUDA and
+# weigh several GB. macOS wheels on PyPI are already CPU-only, so no override.
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
